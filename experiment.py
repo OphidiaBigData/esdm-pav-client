@@ -93,6 +93,13 @@ class Workflow:
                     else:
                         new_task.addDependency(task=dependency["task"], argument=dependency["argument"])
 
+        def add_dependencies(task, new_task, task_names_dict):
+            if len(task.dependencies) > 0:
+                for d in task.dependencies:
+                    if d["task"] in task_names_dict:
+                        d["task"] = task_names_dict[d["task"]]
+                    new_task.copyDependency(d)
+
         def add_task_name(given_name, previous_name, task_id):
             if given_name:
                 return "{0}_{1}".format(given_name, previous_name)
@@ -125,12 +132,15 @@ class Workflow:
         task_id = 1
         all_tasks = []
         non_leaf_tasks = []
+        old_task_names_new_task_names = {}
         for task in workflow.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
+            old_task_names_new_task_names[task.name] = new_task_name
             task_id += 1
             new_arguments = check_replace_args(params, task.reverted_arguments())
             new_task = Task(operator=task.operator, arguments=new_arguments, name=new_task_name)
             find_root_tasks_add_dependencies(task, dependency, new_task)
+            add_dependencies(task, new_task, old_task_names_new_task_names)
             all_tasks.append(new_task)
             self.addTask(new_task)
             non_leaf_tasks += [t["task"] for t in task.dependencies]
@@ -198,6 +208,9 @@ class Task:
             dependency_dict["type"] = "all"
         dependency_dict["task"] = task.__dict__["name"]
         self.dependencies.append(dependency_dict)
+
+    def copyDependency(self, dependency):
+        self.dependencies.append(dependency)
 
     def setName(self, name):
         self.name = name
