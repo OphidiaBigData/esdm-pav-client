@@ -4,6 +4,7 @@ class Workflow:
     active_attributes = ["name", "author", "abstract"]
     task_attributes = ["run", "on_exit", "on_error"]
     task_name_counter = 1
+    subworkflow_names = []
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
@@ -27,6 +28,7 @@ class Workflow:
             raise AttributeError("task already exists")
         if task.__dict__["dependencies"]:
             for dependency in task.__dict__["dependencies"]:
+                # print([task.__dict__["name"] for task in self.tasks])
                 if dependency["task"] not in [task.__dict__["name"] for task in self.tasks]:
                     raise AttributeError("dependency not fulfilled")
         self.task_name_counter += 1
@@ -93,12 +95,20 @@ class Workflow:
                     else:
                         new_task.addDependency(task=dependency["task"], argument=dependency["argument"])
 
-        def add_dependencies(task, new_task, task_names_dict):
+        def add_dependencies(task, new_task):
             if len(task.dependencies) > 0:
                 for d in task.dependencies:
-                    if d["task"] in task_names_dict:
-                        d["task"] = task_names_dict[d["task"]]
-                    new_task.copyDependency(d)
+                    d["task"] = fix_dependency_name(d["task"])
+                    dep_dict = dict(d)
+                    new_task.copyDependency(dep_dict)
+
+        def fix_dependency_name(dependency_name):
+            if len(self.subworkflow_names) == 1:
+                return self.subworkflow_names[0] + "_" + dependency_name
+            elif len(self.subworkflow_names) > 1:
+                return dependency_name.replace(self.subworkflow_names[0], self.subworkflow_names[-1])
+            else:
+                raise AttributeError("No subworkflow name")
 
         def add_task_name(given_name, previous_name, task_id):
             if given_name:
@@ -126,24 +136,28 @@ class Workflow:
                         new_task_arguments[k] = task_arguments[k]
                 else:
                     new_task_arguments[k] = task_arguments[k]
+
             return new_task_arguments
 
         validate_workflow(self, workflow)
         task_id = 1
         all_tasks = []
         non_leaf_tasks = []
-        old_task_names_new_task_names = {}
+        self.subworkflow_names.append(name)
         for task in workflow.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
-            old_task_names_new_task_names[task.name] = new_task_name
             task_id += 1
             new_arguments = check_replace_args(params, task.reverted_arguments())
             new_task = Task(operator=task.operator, arguments=new_arguments, name=new_task_name)
             find_root_tasks_add_dependencies(task, dependency, new_task)
-            add_dependencies(task, new_task, old_task_names_new_task_names)
+            add_dependencies(task, new_task)
             all_tasks.append(new_task)
             self.addTask(new_task)
             non_leaf_tasks += [t["task"] for t in task.dependencies]
+        print("from subworkflow")
+        for t in self.tasks:
+            for d in t.dependencies:
+                print(d)
         return [t for t in all_tasks if t.name not in non_leaf_tasks]
 
     @staticmethod
@@ -175,10 +189,12 @@ class Workflow:
                 new_task.__dict__.update({k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"})
                 workflow.addTask(new_task)
             return workflow
+
         data = file_check(file)
         check_workflow_name(data)
         workflow = start_workflow(data)
         return workflow
+
 
 class Task:
     attributes = ["run", "on_exit", "on_error"]
