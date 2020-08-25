@@ -1,26 +1,58 @@
 class Workflow:
-    """Workflow(name, author=None, abstract=None, **kwargs)
-    Attributes:
-        name: workflow name
-        author: workflow author
-        abstract: workflow description
+    """
+    Creates or loads a workflow. It also contains methods to manipulate the workflow.
 
-    Keyword Args:
-        url: workflow URL
-        sessionid: session id for the entire workflow
-        exec_mode: execution mode of the workflow, sync or async
-        ncores: number of cores
-        nhost: number of hosts
-        on_error: behaviour in case of error
-        on_exit: operation to be executed on output objects
-        run: enable submission to analytics framework, yes or no
-        cwd: current working directory
-        cdd: absolute path corresponding to the current directory on data repository
-        cube: cube PID for the entire workflow
-        callback_url: callback URL for the entire workflow
-        output_format: mode to code workflow output
-        host_partition: name of host partition to be used in the workflow
-        nthreads: number of threads
+    Workflow is a sequence of tasks. Each task can be either independent or dependent on other tasks,
+    for instance it processes the output of other tasks.
+
+    Construction::
+    w1 = Workflow(name="sample", author="sample author", abstract="Sample abstract", url=None, sessionid=None, ncores=2,
+                    nhost=2, on_error=None, on_exist=None, run=None, cwd=None, cdd=None, cube=None, callback_url=None,
+                    output_format=None, host_partition=None, nthreads=None)
+
+    References
+    ----------
+    http://ophidia.cmcc.it/documentation/users/workflow/index.html
+
+    Parameters
+    ----------
+    name: str
+        workflow name
+    author: str
+        workflow author
+    abstract: str
+        workflow description
+    url: str, optional
+        workflow URL
+    sessionid: str, optional
+        session id for the entire workflow
+    exec_mode: str, optional
+        execution mode of the workflow, sync or async
+    ncores: int, optional
+        number of cores
+    nhost: int, optional
+        number of hosts
+    on_error: str, optional
+        behaviour in case of error
+    on_exit: str, optional
+        operation to be executed on output objects
+    run: str, optional
+        enable submission to analytics framework, yes or no
+    cwd: str, optional
+        current working directory
+    cdd: str, optional
+        absolute path corresponding to the current directory on data repository
+    cube: str, optional
+        cube PID for the entire workflow
+    callback_url: str, optional
+        callback URL for the entire workflow
+    output_format: str, optional
+        mode to code workflow output
+    host_partition: str, optional
+        name of host partition to be used in the workflow
+    nthreads: str, optional
+        number of threads
+
     """
     attributes = ["url", "sessionid", "exec_mode", "ncores", "nhost", "on_error", "on_exit", "run", "cwd", "cdd",
                   "cube", "callback_url", "output_format", "host_partition", "nthreads"]
@@ -30,44 +62,6 @@ class Workflow:
     subworkflow_names = []
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
-        """Workflow(name, author=None, abstract=None, **kwargs)
-        :param name: workflow name
-        :type name: <class 'str'>
-        :param author: workflow author
-        :type author: <class 'str'>
-        :param abstract: workflow description
-        :type abstract: <class 'str'>
-        :key url: workflow URL
-        :type url: <class 'str'>
-        :key sessionid: session id for the entire workflow
-        :type sessionid: <class 'str'>
-        :key exec_mode: execution mode of the workflow, sync or async
-        :type exec_mode: <class 'str'>
-        :key ncores: number of cores
-        :type ncores: <class 'int'>
-        :key nhost: number of hosts
-        :type nhost: <class 'int'>
-        :key on_error: behaviour in case of error
-        :type on_error: <class 'str'>
-        :key on_exit: operation to be executed on output objects
-        :type on_exit: <class 'str'>
-        :key run: enable submission to analytics framework, yes or no
-        :type run: <class 'str'>
-        :key cwd: current working directory
-        :type cwd: <class 'str'>
-        :key cdd: absolute path corresponding to the current directory on data repository
-        :type cdd: <class 'str'>
-        :key cube: cube PID for the entire workflow
-        :type cube: <class 'str'>
-        :key callback_url: callback URL for the entire workflow
-        :type callback_url: <class 'str'>
-        :key output_format: mode to code workflow output
-        :type output_format: <class 'str'>
-        :key host_partition: name of host partition to be used in the workflow
-        :type host_partition: <class 'str'>
-        :key nthreads: workflow number of threads
-        :type nthreads: <class 'int'>
-        """
         for k in kwargs.keys():
             if k not in self.attributes:
                 raise AttributeError("Unknown workflow argument: {0}".format(k))
@@ -79,20 +73,25 @@ class Workflow:
         self.__dict__.update(kwargs)
 
     def deinit(self):
-        """deinit() -> None : reverse the initialization of the object
-        :return: None
-        :rtype: None
+        """
+        Reverse the initialization of the object
         """
         for k in self.active_attributes:
             self.__delattr__(k)
 
     def addTask(self, task):
-        """addTask(task) -> None : adds tasks to workflow
-        :param task: task
-        :type task: <class 'pav.Task'>
-        :returns: None
-        :rtype: None
-        :raises: AttributeError
+        """
+        Adds tasks to workflow
+
+        Parameters
+        ----------
+        task : <class 'pav.Task'>
+            Task to be added to the workflow
+
+        Raises
+        ------
+        AttributeError
+            If the task name is already in the Workflow or if a dependency is not fulfilled
         """
         if "name" not in task.__dict__.keys() or task.name is None:
             task.name = self.name + "_{0}".format(self.task_name_counter)
@@ -108,11 +107,20 @@ class Workflow:
         self.tasks.append(task)
 
     def getTask(self, taskname):
-        """getTask(taskname) -> pav.Task|None : get Task from a given string
-        :param taskname: name of the task
-        :type taskname: <class 'str'>
-        :returns: pav.Task | None
-        :rtype: <class 'pav.Task'> | <class 'NoneType'>
+        """
+        Retrieve from the workflow a pav.Task object from a given task name
+
+        Parameters
+        ----------
+        taskname : str
+            The name of the task we want to find in the workflow
+
+        Returns
+        -------
+        tasks[0] : <class 'pav.Task'>
+            Returns the first found task
+        None : Nonetype
+            If no task was found then returns None
         """
         tasks = [t for t in self.tasks if t["name"] == taskname]
         if len(tasks) == 1:
@@ -121,10 +129,19 @@ class Workflow:
             return None
 
     def save(self, workflowname):
-        """save(workflowname) -> None : save the workflow in a file
-        :param workflowname:
-        :type workflowname: <class 'str'>
-        :return: None
+        """
+        Save the workflow in a JSON file
+
+        Parameters
+        ----------
+        workflowname : str
+            A name for the workflow which will be used to save it in a JSON file
+
+        Example
+        -------
+        from pav import *
+        w1 = Workflow(name="sample name", author="sample author", abstract="sample abstract")
+        w1.save("sample_workflow")
         """
         import json
         import os
@@ -137,24 +154,35 @@ class Workflow:
             json.dump(data, fp, indent=4)
 
     def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
-        """newTask(operator, arguments, dependencies, name, **kwargs) -> pav.Task : add new Task in workflow
-        :param operator: Ophidia operator name
-        :type operator: <class 'str'>
-        :param arguments: list of user-defined operator arguments as key=value pairs
-        :type arguments: <class 'dict'>
-        :param dependencies:
-        :type dependencies: <class 'dict'>
-        :param name: name of the task
-        :type name: <class 'str'>
-        :key on_error: workflow description
-        :type on_error: <class 'str'>
-        :key on_exit: workflow description
-        :type on_exit: <class 'str'>
-        :key run: workflow description
-        :type run: <class 'str'>
-        :return: pavtask
-        :rtype: <class 'pav.Task'>
-        :raises: AttributeError
+        """
+        Adds a new Task in the workflow without the need of creating a pav.Task object
+
+        Attributes
+        ----------
+        operator : str
+            Ophidia operator name
+        arguments : dict
+            dict of user-defined operator arguments as key=value pairs
+        dependencies : dict
+            a dict of dependencies for the task
+        name : str
+            the name of the task
+        on_error : str, optional
+            behaviour in case of error
+        on_exit : str, optional
+            operation to be executed on output objects
+        run : str, optional
+            enable submission to analytics framework, yes or no
+
+        Returns
+        -------
+        t : <class 'pav.Task'>
+            Returns the task that was created and added to the workflow
+
+        Raises
+        ------
+        AttributeError
+            Raises an AttributeError if the given arguments are not on the task's attributes
         """
         t = Task(operator=operator, arguments=arguments, name=name)
         if dependencies:
@@ -171,19 +199,29 @@ class Workflow:
         return t
 
     def newSubWorkflow(self, workflow, params, dependency=[], name=None):
-        """newSubWorkflow(workflow, params, dependency=[], name=None) -> list : combines two workflows and returns a
-        task list
-        :param workflow: workflow to be embedded
-        :type workflow: <class 'pav.Workflow'>
-        :param params: dict of keywords to be replaced
-        :type params: <class 'dict'>
-        :param dependency: list of dependencies
-        :type dependency: <class 'list'>
-        :param name: unique name for the workflow's tasks
-        :type name: <class 'str'>
-        :return: list
-        :rtype: <class 'list'>
-        :raises: AttributeError
+        """
+        Embeds a workflow into another workflow
+
+        Parameters
+        ----------
+        workflow : <class 'pav.Workflow'>
+            The workflow we will embed to our main workflow
+        params : dict of keywords
+            a dict of keywords that will be used to replace placeholders in the tasks
+        dependency : list
+            a list of dependencies
+        name : str
+            unique name for the workflow's tasks
+
+        Returns
+        -------
+        A list of the tasks
+
+        Raises
+        ------
+        AttributeError
+            Raises AttributeError when there's an error with the workflows (same name or non-existent), or when the
+            dependencies are not fulfilled
         """
         def validate_workflow(w1, w2):
             if not isinstance(w2, Workflow) or w1.name == w2.name:
@@ -266,11 +304,25 @@ class Workflow:
 
     @staticmethod
     def load(file):
-        """load(file) -> None : loads a workflow from a JSON file
-        :param file: the name of the JSON file
-        :type file: <class 'str'>
-        :return: None
-        :raises: JSONDecodeError
+        """
+        Load a workflow from a JSON file
+
+        Parameters
+        ----------
+        file : str
+            the name of the file we want to load
+
+        Returns
+        -------
+        workflow : <class 'pav.Workflow'>
+            Returns the workflow object as it was loaded from the file
+
+        Raises
+        ------
+        IOError
+            Raises IOError if the file doesn't exist
+        JSONDecodeError
+            Raises JSONDecodeError if the file doesn't containt a valid JSON structure
         """
         def file_check(filename):
             import os
@@ -307,39 +359,35 @@ class Workflow:
 
 
 class Task:
-    """Task(operator, arguments={}, name=None, type=None, **kwargs)
-    Attributes:
-        operator: Ophidia operator name
-        arguments: list of user-defined operator arguments as key=value pairs
-        name: unique task name
-        type: type of the task
+    """
+    Creates a Task object that will be used to be embedded on the workflow
 
-    Keyword Args:
-        run: enable submission to analytics framework, yes or no
-        on_exit: operation to be executed on output objects
-        on_error: behaviour in case of error
+    Construction::
+    t1 = Task(name="Sample name", operator="oph_createcontainer", arguments=['container=work', 'dim=lat|lon|time',
+        'dim_type=double|double|double', 'hierarchy=oph_base|oph_base|oph_time', 'base_time=1976-01-01',
+        'calendar=standard', 'units=d'], on_error="skip")
 
+    Parameters
+    ----------
+    operator : str
+        Ophidia operator name
+    arguments : dict
+        list of user-defined operator arguments as key=value pairs
+    name : str
+        unique task name
+    type : str
+        type of the task
+    run : str, optional
+        enable submission to analytics framework, yes or no
+    on_error : str, optional
+        behaviour in case of error
+    on_exit : str, optional
+        operation to be executed on output objects
     """
     attributes = ["run", "on_exit", "on_error"]
     active_attributes = ["name", "operator", "arguments"]
 
     def __init__(self, operator, arguments={}, name=None, type=None, **kwargs):
-        """Task(operator, arguments={}, name=None, type=None, **kwargs)
-        :param operator: Ophidia operator name
-        :type operator: <class 'str'>
-        :param arguments: list of user-defined operator arguments as key=value pairs
-        :type arguments: <class 'dict'>
-        :param name: unique task name
-        :type name: <class 'str'>
-        :param type: type of the task
-        :type type: <class 'str'>
-        :key run: enable submission to analytics framework, yes or no
-        :type run: <class 'str'>
-        :key on_exit: operation to be executed on output objects
-        :type on_exit: <class 'str'>
-        :key on_error: behaviour in case of error
-        :type on_error: <class 'str'>
-        """
         for k in kwargs.keys():
             if k not in self.attributes:
                 raise AttributeError("Unknown Task argument: {0}".format(k))
@@ -351,21 +399,22 @@ class Task:
         self.__dict__.update(kwargs)
 
     def deinit(self):
-        """deinit() -> None : reverse the initialization of the object
-        :return: None
-        :rtype: None
+        """
+        Reverse the initialization of the object
         """
         for k in self.active_attributes:
             self.__delattr__(k)
 
     def addDependency(self, task, argument=None):
-        """addDependency(task, argument=None) -> None : adds dependencies to a task
+        """
+        Adds previous tasks as a dependency on the current task
 
-        :param task: task name the current argument depends on
-        :type task: <class 'pav.Task'>
-        :param argument: argument depending on the output of the task 'task'
-        :type argument: <class 'str'>
-        :return: None
+        Parameters
+        ----------
+        task : pav.Task
+            task name the current argument depends on
+        argument : str
+            argument depending on the output of the task 'task'
         """
         dependency_dict = {}
         if not argument:
@@ -377,17 +426,24 @@ class Task:
         self.dependencies.append(dependency_dict)
 
     def copyDependency(self, dependency):
-        """copyDependency(dependency) -> None : copy a dependency instead of using addDependency, when it has the proper
-        format
-        :param dependency: dependency difct
-        :type dependency: <class 'dict'>
-        :return: None
+        """
+        Copy a dependency instead of using addDependency, when it has the proper format
+        
+        Parameters
+        ----------
+        dependency : dict
+            Copy a dependency to a task            
         """
         self.dependencies.append(dependency)
 
     def reverted_arguments(self):
-        """reverted_arguments() -> dict : changes the format of the arguments
-        :return: <class 'dict'>
+        """
+        Changes the format of the arguments
+        
+        Returns
+        -------
+        arguments : dict
+            returns the arguments with the newest format        
         """
         arguments = {}
         for arg in self.arguments:
