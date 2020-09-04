@@ -10,9 +10,6 @@ class Workflow:
                     nhost=2, on_error=None, on_exist=None, run=None, cwd=None, cdd=None, cube=None, callback_url=None,
                     output_format=None, host_partition=None, nthreads=None)
 
-    References
-    ----------
-    http://ophidia.cmcc.it/documentation/users/workflow/index.html
 
     Parameters
     ----------
@@ -92,6 +89,11 @@ class Workflow:
         ------
         AttributeError
             If the task name is already in the Workflow or if a dependency is not fulfilled
+
+        Example
+        -------
+        t1 = Task(name="Import Type Selection Historical", operator="oph_if", arguments=None)
+        w1.addTask(t5)
         """
         if "name" not in task.__dict__.keys() or task.name is None:
             task.name = self.name + "_{0}".format(self.task_name_counter)
@@ -121,6 +123,11 @@ class Workflow:
             Returns the first found task
         None : Nonetype
             If no task was found then returns None
+
+        Example
+        -------
+        t1 = Task(name="task_one", operator="oph_if", arguments=None)
+        task = w1.getTask(taskname="task_one")
         """
         tasks = [t for t in self.tasks if t["name"] == taskname]
         if len(tasks) == 1:
@@ -142,14 +149,24 @@ class Workflow:
         from pav import *
         w1 = Workflow(name="sample name", author="sample author", abstract="sample abstract")
         w1.save("sample_workflow")
+
+        Raises
+        ------
+        AttributeError
+            If worfklowname, which is the variable of the file, is not a string or it's empty
         """
         import json
         import os
-        data = self.__dict__
-        del data["task_name_counter"]
+        if not isinstance(workflowname, str):
+            raise AttributeError("workflowname must be string")
+        if len(workflowname) == 0:
+            raise AttributeError("workflowname must contain more than 1 characters")
+        data = dict(self.__dict__)
+        if "task_name_counter" in data.keys():
+            del data["task_name_counter"]
         if not workflowname.endswith(".json"):
             workflowname += ".json"
-        self.tasks = [t.__dict__ for t in self.tasks]
+        data["tasks"] = [t.__dict__ for t in self.tasks]
         with open(os.path.join(os.getcwd(), workflowname), 'w') as fp:
             json.dump(data, fp, indent=4)
 
@@ -183,7 +200,24 @@ class Workflow:
         ------
         AttributeError
             Raises an AttributeError if the given arguments are not on the task's attributes
+
+        Example
+        -------
+        w1 = Workflow(name="PTA", author="CMCC Foundation", abstract="sample abstract")
+        t1 = w1.newTask(operator='oph_createcontainer', arguments={'container': 'work'}, dependencies={})
         """
+
+        def parameter_check(operator, arguments, dependencies, name):
+            if not isinstance(operator, str):
+                raise AttributeError("operator must be a string")
+            if not isinstance(arguments, dict):
+                raise AttributeError("arguments must be a dict")
+            if not isinstance(dependencies, dict):
+                raise AttributeError("dependencies must be a dict")
+            if not isinstance(name, str) and name!=None:
+                raise AttributeError("name must be a string")
+
+        parameter_check(operator, arguments, dependencies, name)
         t = Task(operator=operator, arguments=arguments, name=name)
         if dependencies:
             for k in dependencies.keys():
@@ -198,7 +232,7 @@ class Workflow:
         self.addTask(t)
         return t
 
-    def newSubWorkflow(self, workflow, params, dependency=[], name=None):
+    def newSubWorkflow(self, workflow, params, dependency={}, name=None):
         """
         Embeds a workflow into another workflow
 
@@ -222,12 +256,30 @@ class Workflow:
         AttributeError
             Raises AttributeError when there's an error with the workflows (same name or non-existent), or when the
             dependencies are not fulfilled
+
+        Example
+        -------
+        w1 = Workflow(name="PTA", author="CMCC Foundation", abstract="sample abstract")
+        w2 = Workflow(name="PTA_template", author="CMCC Foundation", abstract="sample abstract")
+        t1 = w2.newTask(operator='oph_if')
+        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, depdnency=[])
+        task_array_2 = w1.newSubWorkflow(name="new_subworkflow_2", workflow=w2, params={}, depdnency=[])
         """
+        def parameter_check(params, dependency, name):
+            if not isinstance(params, dict):
+                raise AttributeError("params must be dict")
+            if not isinstance(dependency, dict):
+                raise AttributeError("dependency must be dict")
+            if not isinstance(name, str):
+                raise AttributeError("name must be string")
+
         def validate_workflow(w1, w2):
             if not isinstance(w2, Workflow) or w1.name == w2.name:
                 raise AttributeError("Wrong workflow or same workflows")
 
         def dependency_check(dependency):
+            if not isinstance(dependency, dict):
+                raise AttributeError("dependency must be a list")
             if len(dependency.keys()) > 2:
                 raise AttributeError("Wrong dependency arguments")
             elif len(dependency.keys()) == 2:
@@ -284,7 +336,7 @@ class Workflow:
                     new_task_arguments[k] = task_arguments[k]
 
             return new_task_arguments
-
+        parameter_check(params, dependency, name)
         validate_workflow(self, workflow)
         task_id = 1
         all_tasks = []
@@ -323,7 +375,12 @@ class Workflow:
             Raises IOError if the file doesn't exist
         JSONDecodeError
             Raises JSONDecodeError if the file doesn't containt a valid JSON structure
+
+        Example
+        -------
+        w1 = workflow.load("json_file.json")
         """
+
         def file_check(filename):
             import os
             import json
@@ -415,7 +472,25 @@ class Task:
             task name the current argument depends on
         argument : str
             argument depending on the output of the task 'task'
+
+        Raises
+        ------
+        AttributeError
+            When one of the parameters has the wrong type
+
+        Example
+        -------
+        t2 = w2.newTask(operator='oph_if')
+        t3 = Task(name="Create Historical Container", operator="oph_createcontainer", arguments={}, on_error="skip")
+        t3.addDependency(t2)
         """
+        def parameter_check(task, argument):
+            if not isinstance(argument, str):
+                raise AttributeError("argument must be string")
+            if not isinstance(task, Task):
+                raise AttributeError("task must be Task object")
+
+        parameter_check(task, argument)
         dependency_dict = {}
         if not argument:
             dependency_dict["type"] = "embedded"
@@ -428,22 +503,22 @@ class Task:
     def copyDependency(self, dependency):
         """
         Copy a dependency instead of using addDependency, when it has the proper format
-        
+
         Parameters
         ----------
         dependency : dict
-            Copy a dependency to a task            
+            Copy a dependency to a task
         """
         self.dependencies.append(dependency)
 
     def reverted_arguments(self):
         """
         Changes the format of the arguments
-        
+
         Returns
         -------
         arguments : dict
-            returns the arguments with the newest format        
+            returns the arguments with the newest format
         """
         arguments = {}
         for arg in self.arguments:
