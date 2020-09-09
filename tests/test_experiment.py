@@ -1,4 +1,5 @@
-from experiment import *
+from workflow import Workflow
+from task import Task
 import pytest
 
 """For the shake of the testing process a workflow object is being created along with some task objects"""
@@ -16,10 +17,21 @@ w1 = Workflow(name="PTA", author="CMCC Foundation", abstract="Workflow for the a
                                                              "(optional), set to '1' in case only subsetting "
                                                              "data have to be imported (default); ${11} I/O server "
                                                              "type (optional).")
-t1 = w1.newTask(operator='oph_createcontainer', arguments={'container': 'work', 'dim': 'lat|lon|time', 'dim_type': 'double|double|double', 'hierarchy': 'oph_base|oph_base|oph_time', 'base_time': '1976-01-01', 'calendar': 'standard', 'units': 'd'}, dependencies={})
+t1 = w1.newTask(operator='oph_createcontainer', arguments={'container': 'work', 'dim': 'lat|lon|time',
+                                                           'dim_type': 'double|double|double',
+                                                           'hierarchy': 'oph_base|oph_base|oph_time',
+                                                           'base_time': '1976-01-01', 'calendar': 'standard',
+                                                           'units': 'd'}, dependencies={})
 
 w2 = Workflow(name="PTA_template", author="CMCC Foundation",
-              abstract="Workflow for the analysis of precipitation trends related to different scenarios. ${1} is ncores; ${2} is the list of models (e.g. CMCC-CM|CMCC-CMS); ${3} is the scenario (e.g. rcp45 or rcp85); ${4} is the frequency (e.g. day or mon); ${5} is the percentile (e.g. 0.9); ${6} is the past time subset (e.g. 1976_2006); ${7} is the future time subset (e.g. 2071_2101); ${8} is the geographic subset (e.g. 30:45|0:40); ${9} is the grid of output map using the format r<lon>x<lat> (e.g. r360x180), i.e. a global regular lon/lat grid; ${10} import type (optional), set to '1' in case only subsetting data have to be imported (default); ${11} I/O server type (optional).")
+              abstract="Workflow for the analysis of precipitation trends related to different scenarios. ${1} "
+                       "is ncores; ${2} is the list of models (e.g. CMCC-CM|CMCC-CMS); ${3} is the scenario "
+                       "(e.g. rcp45 or rcp85); ${4} is the frequency (e.g. day or mon); ${5} is the percentile "
+                       "(e.g. 0.9); ${6} is the past time subset (e.g. 1976_2006); ${7} is the future time subset "
+                       "(e.g. 2071_2101); ${8} is the geographic subset (e.g. 30:45|0:40); ${9} is the grid of output "
+                       "map using the format r<lon>x<lat> (e.g. r360x180), i.e. a global regular lon/lat grid; ${10} "
+                       "import type (optional), set to '1' in case only subsetting data have to be imported (default); "
+                       "${11} I/O server type (optional).")
 t2 = w2.newTask(operator='oph_if')
 t3 = Task(name="Create Historical Container", operator="oph_createcontainer", arguments={}, on_error="skip")
 
