@@ -1,3 +1,4 @@
+
 class Workflow:
     """
     Creates or loads a workflow. It also contains methods to manipulate the workflow.
@@ -92,8 +93,8 @@ class Workflow:
 
         Example
         -------
-        t1 = Task(name="Import Type Selection Historical", operator='oph_reduce', arguments={'operation': 'avg'})
-        w1.addTask(t5)
+        t1 = Task(name="Sample Task", operator='oph_reduce', arguments={'operation': 'avg'})
+        w1.addTask(t1)
         """
         if "name" not in task.__dict__.keys() or task.name is None:
             task.name = self.name + "_{0}".format(self.task_name_counter)
@@ -146,7 +147,7 @@ class Workflow:
 
         Example
         -------
-        from pav import *
+        from esdm_pav_client import Workflow
         w1 = Workflow(name="sample name", author="sample author", abstract="sample abstract")
         w1.save("sample_workflow")
 
@@ -203,10 +204,10 @@ class Workflow:
 
         Example
         -------
-        w1 = Workflow(name="PTA", author="CMCC Foundation", abstract="sample abstract")
+        w1 = Workflow(name="Experiment 1", author="CMCC Foundation", abstract="sample abstract")
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'}, dependencies={})
         """
-        from task import Task
+        from .task import Task
 
         def parameter_check(operator, arguments, dependencies, name):
             if not isinstance(operator, str):
@@ -233,7 +234,7 @@ class Workflow:
         self.addTask(t)
         return t
 
-    def newSubWorkflow(self, workflow, params, dependency={}, name=None):
+    def newSubWorkflow(self, workflow, params, dependencies={}, name=None):
         """
         Embeds a workflow into another workflow
 
@@ -243,7 +244,7 @@ class Workflow:
             The workflow we will embed to our main workflow
         params : dict of keywords
             a dict of keywords that will be used to replace placeholders in the tasks
-        dependency : list
+        dependencies : list
             a list of dependencies
         name : str
             unique name for the workflow's tasks
@@ -260,17 +261,16 @@ class Workflow:
 
         Example
         -------
-        w1 = Workflow(name="PTA", author="CMCC Foundation", abstract="sample abstract")
-        w2 = Workflow(name="PTA_template", author="CMCC Foundation", abstract="sample abstract")
+        w1 = Workflow(name="Experiment 1", author="CMCC Foundation", abstract="sample abstract")
+        w2 = Workflow(name="Experiment 2", author="CMCC Foundation", abstract="sample abstract")
         t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, depdnency=[])
-        task_array_2 = w1.newSubWorkflow(name="new_subworkflow_2", workflow=w2, params={}, depdnency=[])
+        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, dependencies=[])
         """
-        def parameter_check(params, dependency, name):
+        def parameter_check(params, dependencies, name):
             if not isinstance(params, dict):
                 raise AttributeError("params must be dict")
-            if not isinstance(dependency, dict):
-                raise AttributeError("dependency must be dict")
+            if not isinstance(dependencies, dict):
+                raise AttributeError("dependencies must be dict")
             if not isinstance(name, str):
                 raise AttributeError("name must be string")
 
@@ -337,7 +337,7 @@ class Workflow:
                     new_task_arguments[k] = task_arguments[k]
 
             return new_task_arguments
-        parameter_check(params, dependency, name)
+        parameter_check(params, dependencies, name)
         validate_workflow(self, workflow)
         task_id = 1
         all_tasks = []
@@ -347,7 +347,7 @@ class Workflow:
             task_id += 1
             new_arguments = check_replace_args(params, task.reverted_arguments())
             new_task = Task(operator=task.operator, arguments=new_arguments, name=new_task_name)
-            find_root_tasks_add_dependencies(task, dependency, new_task)
+            find_root_tasks_add_dependencies(task, dependencies, new_task)
             add_dependencies(task, new_task, name)
             all_tasks.append(new_task)
             self.addTask(new_task)

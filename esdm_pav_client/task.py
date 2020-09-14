@@ -1,11 +1,11 @@
+
 class Task:
     """
     Creates a Task object that will be used to be embedded on the workflow
 
     Construction::
-    t1 = Task(name="Sample name", operator="oph_createcontainer", arguments=['container=work', 'dim=lat|lon|time',
-        'dim_type=double|double|double', 'hierarchy=oph_base|oph_base|oph_time', 'base_time=1976-01-01',
-        'calendar=standard', 'units=d'], on_error="skip")
+    t1 = Task(name="Sample task", operator="oph_createcontainer", arguments=['container=work', 'dim=lat|lon|time',
+        'dim_type=double|double|double'], on_error="skip")
 
     Parameters
     ----------
@@ -63,8 +63,8 @@ class Task:
 
         Example
         -------
-        t2 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        t3 = Task(name="Create Historical Container", operator="oph_createcontainer", arguments={}, on_error="skip")
+        t2 = Task(name="Sample task1", operator='oph_reduce', arguments={'operation': 'avg'})
+        t3 = Task(name="Sample task2", operator='oph_aggregate', arguments={'operation': 'max'})
         t3.addDependency(t2)
         """
         def parameter_check(task, argument):
