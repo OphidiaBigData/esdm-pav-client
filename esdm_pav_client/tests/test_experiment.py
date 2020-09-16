@@ -73,3 +73,13 @@ def test_load(file):
                          [(t2, "myargument"), (t2, ["myargument"]), (t2, {}), (t2, None), (t3, None)])
 def test_addDependency(task, argument):
     t3.addDependency(task=task, argument=argument)
+
+
+@pytest.mark.parametrize(("username", "server", "port", "password"),
+                         [("sample_user", "sample_server", "sample_port", "sample_password"),
+                          (None, None, None, None),
+                          (1, 2, 3, 4),
+                          ("sample_use", 2, 3, None),
+                          ([], {}, [], 0)])
+def test_submit(username, server, port, password):
+    w1.submit(username=username, server=server, port=port, password=password)
