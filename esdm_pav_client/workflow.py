@@ -399,6 +399,7 @@ class Workflow:
                 raise AttributeError("Workflow doesn't have a key")
 
         def start_workflow(data):
+            from task import Task
             workflow = Workflow(name=data["name"])
             del data["name"]
             attrs = {k: data[k] for k in data if k != "name" and k != "tasks"}
@@ -416,3 +417,63 @@ class Workflow:
         return workflow
 
 
+    def submit(self, username="oph-test", server="127.0.0.1", port="11732", password="abcd", *args):
+        """
+        Submit an entire workflow passing a JSON string.
+
+        Parameters
+        ----------
+        username : str
+            Ophidia username
+        server : str
+            Ophidia server
+        port : str
+            Ophidia port
+        password : str
+            Ophidia password
+        args : list
+            list of arguments to be passed to the submit method
+
+
+        Returns
+        -------
+        None
+
+
+        Raises
+        ------
+        AttributeError
+            Raises AttributeError on the occasions of wrong credentials' type or failure to login
+
+
+        Example
+        -------
+        w1 = Workflow.load("workflow.json")
+        w1.submit(username="oph-test", server="127.0.0.1", port="11732", password="abcd")
+        """
+        from PyOphidia import cube, client
+
+        def convert_workflow_to_json():
+            import json
+            new_workflow = dict(self.__dict__)
+            if "tasks" in new_workflow.keys():
+                new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
+            return json.dumps(new_workflow)
+
+        def param_check(username, server, port, password):
+            if not isinstance(username, str):
+                raise AttributeError("username must be string")
+            if not isinstance(server, str):
+                raise AttributeError("server must be string")
+            if not isinstance(port, str):
+                raise AttributeError("port must be string")
+            if not isinstance(password, str):
+                raise AttributeError("password must be string")
+
+        param_check(username, server, port, password)
+        po_client = client.Client(username=username, password=password, server=server, port=port)
+        if po_client.last_return_value != 0:
+            raise AttributeError("failed to login, check your username/password")
+        dict_workflow = convert_workflow_to_json()
+        str_workflow = str(dict_workflow)
+        po_client.wsubmit(workflow=str_workflow, *args)
