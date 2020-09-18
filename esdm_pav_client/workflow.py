@@ -1,4 +1,3 @@
-
 class Workflow:
     """
     Creates or loads a workflow. It also contains methods to manipulate the workflow.
@@ -216,7 +215,7 @@ class Workflow:
                 raise AttributeError("arguments must be a dict")
             if not isinstance(dependencies, dict):
                 raise AttributeError("dependencies must be a dict")
-            if not isinstance(name, str) and name!=None:
+            if not isinstance(name, str) and name != None:
                 raise AttributeError("name must be a string")
 
         parameter_check(operator, arguments, dependencies, name)
@@ -266,6 +265,7 @@ class Workflow:
         t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
         task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, dependencies=[])
         """
+
         def parameter_check(params, dependencies, name):
             if not isinstance(params, dict):
                 raise AttributeError("params must be dict")
@@ -337,6 +337,7 @@ class Workflow:
                     new_task_arguments[k] = task_arguments[k]
 
             return new_task_arguments
+
         parameter_check(params, dependencies, name)
         validate_workflow(self, workflow)
         task_id = 1
@@ -416,8 +417,7 @@ class Workflow:
         workflow = start_workflow(data)
         return workflow
 
-
-    def submit(self, username="oph-test", server="127.0.0.1", port="11732", password="abcd", *args):
+    def submit(self, *args, username="oph-test", server="127.0.0.1", port="11732", password="abcd"):
         """
         Submit an entire workflow passing a JSON string.
 
