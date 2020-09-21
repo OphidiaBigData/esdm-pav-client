@@ -1,13 +1,13 @@
 class Workflow:
     """
-    Creates or loads a workflow. It also contains methods to manipulate the workflow.
+    Creates or loads a ESDM PAV experiment workflow. It also contains methods to manipulate the workflow.
 
     Workflow is a sequence of tasks. Each task can be either independent or dependent on other tasks,
     for instance it processes the output of other tasks.
 
     Construction::
-    w1 = Workflow(name="sample", author="sample author", abstract="Sample abstract", url=None, sessionid=None, ncores=2,
-                    nhost=2, on_error=None, on_exist=None, run=None, cwd=None, cdd=None, cube=None, callback_url=None,
+    w1 = Workflow(name="sample", author="sample author", abstract="sample abstract", url=None, sessionid=None, ncores=1,
+                    nhost=1, on_error=None, on_exist=None, run=None, cwd=None, cdd=None, cube=None, callback_url=None,
                     output_format=None, host_partition=None, nthreads=None)
 
 
@@ -15,9 +15,9 @@ class Workflow:
     ----------
     name: str
         workflow name
-    author: str
+    author: str, optional
         workflow author
-    abstract: str
+    abstract: str, optional
         workflow description
     url: str, optional
         workflow URL
@@ -82,7 +82,7 @@ class Workflow:
 
         Parameters
         ----------
-        task : <class 'pav.Task'>
+        task : <class 'esdm_pav_client.task.Task'>
             Task to be added to the workflow
 
         Raises
@@ -92,7 +92,7 @@ class Workflow:
 
         Example
         -------
-        t1 = Task(name="Sample Task", operator='oph_reduce', arguments={'operation': 'avg'})
+        t1 = Task(name="sample task", operator='oph_reduce', arguments={'operation': 'avg'})
         w1.addTask(t1)
         """
         if "name" not in task.__dict__.keys() or task.name is None:
@@ -110,17 +110,17 @@ class Workflow:
 
     def getTask(self, taskname):
         """
-        Retrieve from the workflow a pav.Task object from a given task name
+        Retrieve from the workflow a esdm_pav_client.task.Task object with the given task name
 
         Parameters
         ----------
         taskname : str
-            The name of the task we want to find in the workflow
+            The name of the task to be found in the workflow
 
         Returns
         -------
-        tasks[0] : <class 'pav.Task'>
-            Returns the first found task
+        task : <class 'esdm_pav_client.task.Task'>
+            Returns the first task found
         None : Nonetype
             If no task was found then returns None
 
@@ -137,12 +137,12 @@ class Workflow:
 
     def save(self, workflowname):
         """
-        Save the workflow in a JSON file
+        Save the ESDM PAV experiment workflow in a JSON file
 
         Parameters
         ----------
         workflowname : str
-            A name for the workflow which will be used to save it in a JSON file
+            The path to the JSON file where the workflow is saved
 
         Example
         -------
@@ -172,17 +172,17 @@ class Workflow:
 
     def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
         """
-        Adds a new Task in the workflow without the need of creating a pav.Task object
+        Adds a new Task in the workflow without the need of creating a esdm_pav_client.task.Task object
 
         Attributes
         ----------
         operator : str
             Ophidia operator name
-        arguments : dict
+        arguments : dict, optional
             dict of user-defined operator arguments as key=value pairs
-        dependencies : dict
+        dependencies : dict, optional
             a dict of dependencies for the task
-        name : str
+        name : str, optional
             the name of the task
         on_error : str, optional
             behaviour in case of error
@@ -193,7 +193,7 @@ class Workflow:
 
         Returns
         -------
-        t : <class 'pav.Task'>
+        t : <class 'esdm_pav_client.task.Task'>
             Returns the task that was created and added to the workflow
 
         Raises
@@ -203,7 +203,7 @@ class Workflow:
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="CMCC Foundation", abstract="sample abstract")
+        w1 = Workflow(name="Experiment 1", author="sample author", abstract="sample abstract")
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'}, dependencies={})
         """
         from .task import Task
@@ -239,18 +239,18 @@ class Workflow:
 
         Parameters
         ----------
-        workflow : <class 'pav.Workflow'>
-            The workflow we will embed to our main workflow
+        workflow : <class 'esdm_pav_client.workflow.Workflow'>
+            The workflow that will be embeded into our main workflow
         params : dict of keywords
             a dict of keywords that will be used to replace placeholders in the tasks
-        dependencies : list
-            a list of dependencies
-        name : str
-            unique name for the workflow's tasks
+        dependencies : list, optional
+            list of dependencies
+        name : str, optional
+            a unique name for the workflow's tasks
 
         Returns
         -------
-        A list of the tasks
+        A list of the leaf tasks of the subworkflow
 
         Raises
         ------
@@ -260,8 +260,8 @@ class Workflow:
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="CMCC Foundation", abstract="sample abstract")
-        w2 = Workflow(name="Experiment 2", author="CMCC Foundation", abstract="sample abstract")
+        w1 = Workflow(name="Experiment 1", author="sample author 1", abstract="sample abstract 1")
+        w2 = Workflow(name="Experiment 2", author="sample author 2", abstract="sample abstract 2")
         t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
         task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, dependencies=[])
         """
@@ -359,28 +359,28 @@ class Workflow:
     @staticmethod
     def load(file):
         """
-        Load a workflow from a JSON file
+        Load a ESDM PAV experiment workflow from a JSON file
 
         Parameters
         ----------
         file : str
-            the name of the file we want to load
+            The name of the file to be loaded
 
         Returns
         -------
-        workflow : <class 'pav.Workflow'>
+        workflow : <class 'esdm_pav_client.workflow.Workflow'>
             Returns the workflow object as it was loaded from the file
 
         Raises
         ------
         IOError
-            Raises IOError if the file doesn't exist
+            Raises IOError if the file does not exist
         JSONDecodeError
-            Raises JSONDecodeError if the file doesn't containt a valid JSON structure
+            Raises JSONDecodeError if the file does not containt a valid JSON structure
 
         Example
         -------
-        w1 = workflow.load("json_file.json")
+        w1 = Workflow.load("json_file.json")
         """
 
         def file_check(filename):
@@ -400,7 +400,7 @@ class Workflow:
                 raise AttributeError("Workflow doesn't have a key")
 
         def start_workflow(data):
-            from task import Task
+            from .task import Task
             workflow = Workflow(name=data["name"])
             del data["name"]
             attrs = {k: data[k] for k in data if k != "name" and k != "tasks"}
@@ -419,20 +419,20 @@ class Workflow:
 
     def submit(self, *args, username="oph-test", server="127.0.0.1", port="11732", password="abcd"):
         """
-        Submit an entire workflow passing a JSON string.
+        Submit an entire ESDM PAV experiment workflow.
 
         Parameters
         ----------
-        username : str
+        username : str, optional
             Ophidia username
-        server : str
+        server : str, optional
             Ophidia server
-        port : str
+        port : str, optional
             Ophidia port
-        password : str
+        password : str, optional
             Ophidia password
         args : list
-            list of arguments to be passed to the submit method
+            list of arguments to be substituted in the workflow
 
 
         Returns
@@ -449,7 +449,7 @@ class Workflow:
         Example
         -------
         w1 = Workflow.load("workflow.json")
-        w1.submit(username="oph-test", server="127.0.0.1", port="11732", password="abcd")
+        w1.submit(username="oph-test", server="127.0.0.1", port="11732", password="abcd", "test")
         """
         from PyOphidia import cube, client
 
@@ -476,4 +476,4 @@ class Workflow:
             raise AttributeError("failed to login, check your username/password")
         dict_workflow = convert_workflow_to_json()
         str_workflow = str(dict_workflow)
-        po_client.wsubmit(workflow=str_workflow, *args)
+        po_client.wsubmit(str_workflow, *args)

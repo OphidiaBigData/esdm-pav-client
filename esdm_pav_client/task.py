@@ -1,21 +1,19 @@
-
 class Task:
     """
-    Creates a Task object that will be used to be embedded on the workflow
+    Creates a Task object that can be embedded in a ESDM PAV experiment workflow
 
     Construction::
-    t1 = Task(name="Sample task", operator="oph_createcontainer", arguments=['container=work', 'dim=lat|lon|time',
-        'dim_type=double|double|double'], on_error="skip")
+    t1 = Task(name="Sample task", operator="oph_reduce", arguments={'operation': 'avg'})
 
     Parameters
     ----------
     operator : str
         Ophidia operator name
-    arguments : dict
+    arguments : dict, optional
         list of user-defined operator arguments as key=value pairs
-    name : str
+    name : str, optional
         unique task name
-    type : str
+    type : str, optional
         type of the task
     run : str, optional
         enable submission to analytics framework, yes or no
@@ -47,14 +45,14 @@ class Task:
 
     def addDependency(self, task, argument=None):
         """
-        Adds previous tasks as a dependency on the current task
+        Adds task as a dependency of the current one
 
         Parameters
         ----------
-        task : pav.Task
-            task name the current argument depends on
-        argument : str
-            argument depending on the output of the task 'task'
+        task : <class 'esdm_pav_client.task.Task'>
+            task the current one depends on
+        argument : str, optional
+            argument to be set to the output of the task 'task'
 
         Raises
         ------
@@ -68,7 +66,7 @@ class Task:
         t3.addDependency(t2)
         """
         def parameter_check(task, argument):
-            if not isinstance(argument, str):
+            if argument is not None and not isinstance(argument, str):
                 raise AttributeError("argument must be string")
             if not isinstance(task, Task):
                 raise AttributeError("task must be Task object")
