@@ -1,20 +1,22 @@
 import click
 import sys
 sys.path.insert(0, '..')
-from workflow import *
+from esdm_pav_client import Workflow
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
-    allow_extra_args=True,
 ))
 @click.option('-v', '--verbose', is_flag=True, help="Will print verbose messages.")
-@click.option('-w', '--workflow', help="Workflow to run")
 @click.option('-u', '--username', help="Username to login to Pyophidia", default='oph-test')
 @click.option('-p', '--password', help="Password to login to Pyophidia", default='abcd')
-@click.option('-s', '--server', help="Server's address", default='127.0.0.1')
-@click.option('-pt', '--port', help="Server's port", default='11732')
-@click.pass_context
-def run(ctx, verbose, workflow, username, password, server, port):
+@click.option('-S', '--server', help="Server's address", default='127.0.0.1')
+@click.option('-P', '--port', help="Server's port", default='11732')
+@click.argument('workflow')
+@click.argument('workflow_args', nargs=-1, type=click.UNPROCESSED)
+def run(verbose, username, password, server, port, workflow, workflow_args):
+    """Command Line Interface to run an ESDM PAV experiment WORKFLOW\n
+       Example: client.py experiment.json 1 2"""
+
     def modify_args(workflow, username, password, server, port):
         if workflow.startswith("="):
             workflow = workflow[1:]
@@ -28,9 +30,9 @@ def run(ctx, verbose, workflow, username, password, server, port):
             port = port[1:]
         return workflow, username, password, server, port
 
-    def extract_other_args(ctx):
+    def extract_other_args(wf_args):
         args = []
-        for c in ctx.args:
+        for c in wf_args:
             if c.startswith("="):
                 args.append(c[1:])
             elif not c.startswith("-"):
@@ -38,7 +40,8 @@ def run(ctx, verbose, workflow, username, password, server, port):
         return args
 
     workflow, username, password, server, port = modify_args(workflow, username, password, server, port)
-    args = extract_other_args(ctx)
+    args = extract_other_args(workflow_args)
+
     if verbose:
         click.echo("Reading the workflow")
     w1 = Workflow.load(workflow)
