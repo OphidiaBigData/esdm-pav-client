@@ -22,7 +22,7 @@ class Task:
     on_exit : str, optional
         operation to be executed on output objects
     """
-    attributes = ["run", "on_exit", "on_error"]
+    attributes = ["run", "on_exit", "on_error","type"]
     active_attributes = ["name", "operator", "arguments"]
 
     def __init__(self, operator, arguments={}, name=None, type=None, **kwargs):

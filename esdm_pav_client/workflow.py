@@ -54,7 +54,7 @@ class Workflow:
     attributes = ["url", "sessionid", "exec_mode", "ncores", "nhost", "on_error", "on_exit", "run", "cwd", "cdd",
                   "cube", "callback_url", "output_format", "host_partition", "nthreads"]
     active_attributes = ["name", "author", "abstract"]
-    task_attributes = ["run", "on_exit", "on_error"]
+    task_attributes = ["run", "on_exit", "on_error", "type"]
     task_name_counter = 1
     subworkflow_names = []
 
