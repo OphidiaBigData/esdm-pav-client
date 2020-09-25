@@ -33,5 +33,15 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Scientific/Engineering',
         #'Private :: Do Not Upload',
-    ]
+    ],
+    install_requires=[
+        'pyophidia',
+        'click'
+    ],
+    entry_points  = {
+        'console_scripts': [
+            'esdm-pav-client = esdm_pav_client.cli.client:run',
+        ],
+    },
+    zip_safe=False,
 )
