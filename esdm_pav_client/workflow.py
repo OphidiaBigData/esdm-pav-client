@@ -319,17 +319,17 @@ class Workflow:
             import re
             new_task_arguments = {}
             for k in task_arguments:
-                if re.search('(\$.*)', k):
-                    if re.findall('(\$.*)', k)[0] in params.keys():
-                        new_task_arguments[re.sub("(\$.*)", params[re.findall('(\$.*)', k)[0]], k)] = task_arguments[k]
+                if re.search(r'(\$.*)', k):
+                    if re.findall(r'(\$.*)', k)[0] in params.keys():
+                        new_task_arguments[re.sub(r"(\$.*)", params[re.findall(r'(\$.*)', k)[0]], k)] = task_arguments[k]
                     else:
                         new_task_arguments[k] = task_arguments[k]
                 else:
                     new_task_arguments[k] = task_arguments[k]
             for k in task_arguments:
-                if re.search('(\$.*)', task_arguments[k]):
-                    if re.findall('(\$.*)', task_arguments[k])[0] in params.keys():
-                        new_task_arguments[k] = re.sub("(\$.*)", params[re.findall('(\$.*)', task_arguments[k])[0]],
+                if re.search(r'(\$.*)', task_arguments[k]):
+                    if re.findall(r'(\$.*)', task_arguments[k])[0] in params.keys():
+                        new_task_arguments[k] = re.sub(r"(\$.*)", params[re.findall(r'(\$.*)', task_arguments[k])[0]],
                                                        task_arguments[k])
                     else:
                         new_task_arguments[k] = task_arguments[k]
