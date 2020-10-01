@@ -31,7 +31,6 @@ t3 = Task(
     name="Create Container",
     operator="oph_createcontainer",
     arguments={},
-    on_error="skip",
 )
 
 

@@ -11,10 +11,8 @@ class Workflow:
 
     Construction::
     w1 = Workflow(name="sample", author="sample author",
-                    abstract="sample abstract", url=None, sessionid=None,
-                    ncores=1, nhost=1, on_error=None, on_exist=None, run=None,
-                    cwd=None, cdd=None, cube=None, callback_url=None,
-                    output_format=None, host_partition=None, nthreads=None)
+                    abstract="sample abstract", on_error=None, run=None,
+                    ncores=1, nthreads=None)
 
 
     Parameters
@@ -25,58 +23,26 @@ class Workflow:
         ESDM PAV experiment author
     abstract: str, optional
         ESDM PAV experiment description
-    url: str, optional
-        ESDM PAV experiment URL
-    sessionid: str, optional
-        session id for the entire experiment workflow
-    exec_mode: str, optional
-        execution mode of the PAV workflow, sync or async
-    ncores: int, optional
-        number of cores
-    nhost: int, optional
-        number of hosts
     on_error: str, optional
         behaviour in case of error
-    on_exit: str, optional
-        operation to be executed on output objects
     run: str, optional
         enable actual execution, yes or no
-    cwd: str, optional
-        current working directory
-    cdd: str, optional
-        absolute path corresponding to the current directory on data repository
-    cube: str, optional
-        cube PID for the entire workflow
-    callback_url: str, optional
-        callback URL for the entire workflow
-    output_format: str, optional
-        mode to code workflow output
-    host_partition: str, optional
-        name of host partition to be used in the workflow
     nthreads: str, optional
         number of threads
+    ncores: int, optional
+        number of cores
 
     """
 
     attributes = [
-        "url",
-        "sessionid",
         "exec_mode",
-        "ncores",
-        "nhost",
         "on_error",
-        "on_exit",
         "run",
-        "cwd",
-        "cdd",
-        "cube",
-        "callback_url",
-        "output_format",
-        "host_partition",
         "nthreads",
+        "ncores",
     ]
     active_attributes = ["name", "author", "abstract"]
-    task_attributes = ["run", "on_exit", "on_error", "type"]
+    task_attributes = ["run", "on_error", "type"]
     task_name_counter = 1
     subworkflow_names = []
 
@@ -88,6 +54,7 @@ class Workflow:
         self.name = name
         self.author = author
         self.abstract = abstract
+        self.exec_mode = "sync"
         self.tasks = []
         self.__dict__.update(kwargs)
 
@@ -125,13 +92,11 @@ class Workflow:
             raise AttributeError("task already exists")
         if task.__dict__["dependencies"]:
             for dependency in task.__dict__["dependencies"]:
-                # print([task.__dict__["name"] for task in self.tasks])
                 if dependency["task"] not in [
                     task.__dict__["name"] for task in self.tasks
                 ]:
                     raise AttributeError("dependency not fulfilled")
         self.task_name_counter += 1
-        # self.tasks.append(task.__dict__)
         self.tasks.append(task)
 
     def getTask(self, taskname):
@@ -220,10 +185,10 @@ class Workflow:
             a dict of dependencies for the task
         name : str, optional
             the name of the task
+        type : str, optional
+            type of the task
         on_error : str, optional
             behaviour in case of error
-        on_exit : str, optional
-            operation to be executed on output objects
         run : str, optional
             enable actual execution, yes or no
 

@@ -23,11 +23,9 @@ class Task:
         enable actual execution, yes or no
     on_error : str, optional
         behaviour in case of error
-    on_exit : str, optional
-        operation to be executed on output objects
     """
 
-    attributes = ["run", "on_exit", "on_error", "type"]
+    attributes = ["run", "on_error", "type"]
     active_attributes = ["name", "operator", "arguments"]
 
     def __init__(self, operator, arguments={}, name=None, type=None, **kwargs):
