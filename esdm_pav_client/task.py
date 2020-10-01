@@ -1,3 +1,4 @@
+
 class Task:
     """
     Creates a Task object that can be embedded in a ESDM PAV experiment workflow
@@ -8,7 +9,7 @@ class Task:
     Parameters
     ----------
     operator : str
-        Ophidia operator name
+        operator name
     arguments : dict, optional
         list of user-defined operator arguments as key=value pairs
     name : str, optional
@@ -16,7 +17,7 @@ class Task:
     type : str, optional
         type of the task
     run : str, optional
-        enable submission to analytics framework, yes or no
+        enable actual execution, yes or no
     on_error : str, optional
         behaviour in case of error
     on_exit : str, optional
@@ -52,7 +53,7 @@ class Task:
         task : <class 'esdm_pav_client.task.Task'>
             task the current one depends on
         argument : str, optional
-            argument to be set to the output of the task 'task'
+            argument to be set with the output of the task 'task'
 
         Raises
         ------
@@ -73,11 +74,8 @@ class Task:
 
         parameter_check(task, argument)
         dependency_dict = {}
-        if not argument:
-            dependency_dict["type"] = "embedded"
-        else:
+        if argument:
             dependency_dict["argument"] = argument
-            dependency_dict["type"] = "all"
         dependency_dict["task"] = task.__dict__["name"]
         self.dependencies.append(dependency_dict)
 

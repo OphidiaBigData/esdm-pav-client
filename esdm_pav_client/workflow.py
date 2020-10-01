@@ -1,8 +1,9 @@
+
 class Workflow:
     """
     Creates or loads a ESDM PAV experiment workflow. It also contains methods to manipulate the workflow.
 
-    Workflow is a sequence of tasks. Each task can be either independent or dependent on other tasks,
+    A workflow is a sequence of tasks. Each task can be either independent or dependent on other tasks,
     for instance it processes the output of other tasks.
 
     Construction::
@@ -14,17 +15,17 @@ class Workflow:
     Parameters
     ----------
     name: str
-        workflow name
+        ESDM PAV experiment name
     author: str, optional
-        workflow author
+        ESDM PAV experiment author
     abstract: str, optional
-        workflow description
+        ESDM PAV experiment description
     url: str, optional
-        workflow URL
+        ESDM PAV experiment URL
     sessionid: str, optional
-        session id for the entire workflow
+        session id for the entire experiment workflow
     exec_mode: str, optional
-        execution mode of the workflow, sync or async
+        execution mode of the PAV workflow, sync or async
     ncores: int, optional
         number of cores
     nhost: int, optional
@@ -34,7 +35,7 @@ class Workflow:
     on_exit: str, optional
         operation to be executed on output objects
     run: str, optional
-        enable submission to analytics framework, yes or no
+        enable actual execution, yes or no
     cwd: str, optional
         current working directory
     cdd: str, optional
@@ -78,7 +79,7 @@ class Workflow:
 
     def addTask(self, task):
         """
-        Adds tasks to workflow
+        Adds a task to the ESDM PAV experiment workflow
 
         Parameters
         ----------
@@ -88,7 +89,7 @@ class Workflow:
         Raises
         ------
         AttributeError
-            If the task name is already in the Workflow or if a dependency is not fulfilled
+            If the task name is already in the workflow or if a dependency is not fulfilled
 
         Example
         -------
@@ -110,7 +111,7 @@ class Workflow:
 
     def getTask(self, taskname):
         """
-        Retrieve from the workflow a esdm_pav_client.task.Task object with the given task name
+        Retrieve from the ESDM PAV workflow the esdm_pav_client.task.Task object with the given task name
 
         Parameters
         ----------
@@ -137,12 +138,12 @@ class Workflow:
 
     def save(self, workflowname):
         """
-        Save the ESDM PAV experiment workflow in a JSON file
+        Save the ESDM PAV experiment workflow as a JSON document
 
         Parameters
         ----------
         workflowname : str
-            The path to the JSON file where the workflow is saved
+            The path to the ESDM PAV document file where the workflow is being saved
 
         Example
         -------
@@ -172,12 +173,12 @@ class Workflow:
 
     def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
         """
-        Adds a new Task in the workflow without the need of creating a esdm_pav_client.task.Task object
+        Adds a new Task in the ESDM PAV experiment workflow without the need of creating a esdm_pav_client.task.Task object
 
         Attributes
         ----------
         operator : str
-            Ophidia operator name
+            operator name
         arguments : dict, optional
             dict of user-defined operator arguments as key=value pairs
         dependencies : dict, optional
@@ -189,7 +190,7 @@ class Workflow:
         on_exit : str, optional
             operation to be executed on output objects
         run : str, optional
-            enable submission to analytics framework, yes or no
+            enable actual execution, yes or no
 
         Returns
         -------
@@ -235,7 +236,7 @@ class Workflow:
 
     def newSubWorkflow(self, workflow, params, dependencies={}, name=None):
         """
-        Embeds a workflow into another workflow
+        Embeds an ESDM PAV experiment workflow into another workflow
 
         Parameters
         ----------
@@ -359,12 +360,12 @@ class Workflow:
     @staticmethod
     def load(file):
         """
-        Load a ESDM PAV experiment workflow from a JSON file
+        Load a ESDM PAV experiment workflow from the JSON document
 
         Parameters
         ----------
         file : str
-            The name of the file to be loaded
+            The name of the ESDM PAV document file to be loaded
 
         Returns
         -------
@@ -417,20 +418,16 @@ class Workflow:
         workflow = start_workflow(data)
         return workflow
 
-    def submit(self, *args, username="oph-test", server="127.0.0.1", port="11732", password="abcd"):
+    def submit(self, *args, server="127.0.0.1", port="11732"):
         """
         Submit an entire ESDM PAV experiment workflow.
 
         Parameters
         ----------
-        username : str, optional
-            Ophidia username
         server : str, optional
-            Ophidia server
+            ESDM PAV runtime DNS/IP address
         port : str, optional
-            Ophidia port
-        password : str, optional
-            Ophidia password
+            ESDM PAV runtime port
         args : list
             list of arguments to be substituted in the workflow
 
@@ -443,13 +440,13 @@ class Workflow:
         Raises
         ------
         AttributeError
-            Raises AttributeError on the occasions of wrong credentials' type or failure to login
+            Raises AttributeError in case of failure to connect to the PAV runtime
 
 
         Example
         -------
         w1 = Workflow.load("workflow.json")
-        w1.submit(username="oph-test", server="127.0.0.1", port="11732", password="abcd", "test")
+        w1.submit(server="127.0.0.1", port="11732", "test")
         """
         from PyOphidia import cube, client
 
@@ -470,10 +467,12 @@ class Workflow:
             if not isinstance(password, str):
                 raise AttributeError("password must be string")
 
+        username="oph-test"
+        password="abcd"
         param_check(username, server, port, password)
         po_client = client.Client(username=username, password=password, server=server, port=port)
         if po_client.last_return_value != 0:
-            raise AttributeError("failed to login, check your username/password")
+            raise AttributeError("failed to connect to the runtime")
         dict_workflow = convert_workflow_to_json()
         str_workflow = str(dict_workflow)
         po_client.wsubmit(str_workflow, *args)

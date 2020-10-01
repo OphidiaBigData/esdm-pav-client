@@ -1,7 +1,7 @@
 ESDM PAV Python API and Client
 ==============================
 
-*esdm-pav-client* is a [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)-licensed Python package for modelling and executing a post-processing, analytics and visualisation (PAV) experiment on the ESDM PAV Runtime system.
+*esdm-pav-client* is a [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)-licensed Python package for modelling and executing a post-processing, analytics and visualisation (PAV) experiment to be executed with the ESDM PAV Runtime system.
 
 It runs on Python 3.5, 3.6 and 3.7 is pure-Python code.
 
@@ -45,7 +45,7 @@ t1 = w1.newTask(name="List cubes", type="ophidia",
 
 #### Task experiments dependency management
 
-Dependency can be specified to enforce an order in the execution of the tasks. Starting from the previous example, a dependent task is added (an Ophidia operator):
+Dependency can be specified to enforce an order in the execution of the tasks. Starting from the previous example, a dependent task is added (e.g., an Ophidia operator):
 
 ``` {.sourceCode .python}
 t2 = w1.newTask(name="Import", type="ophidia",
@@ -67,7 +67,7 @@ t2 = w1.newTask(name="Import", type="ophidia",
 
 #### Save a ESDM PAV experiment document
 
-Save the PAV experiment created in JSON format
+Save the ESDM PAV experiment as JSON document
 
 ``` {.sourceCode .python}
 w1.save("example.json")
