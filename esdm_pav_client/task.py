@@ -1,10 +1,13 @@
 
+
 class Task:
     """
-    Creates a Task object that can be embedded in a ESDM PAV experiment workflow
+    Creates a Task object that can be embedded in a ESDM PAV experiment
+    workflow
 
     Construction::
-    t1 = Task(name="Sample task", operator="oph_reduce", arguments={'operation': 'avg'})
+    t1 = Task(name="Sample task", operator="oph_reduce",
+                arguments={'operation': 'avg'})
 
     Parameters
     ----------
@@ -23,7 +26,8 @@ class Task:
     on_exit : str, optional
         operation to be executed on output objects
     """
-    attributes = ["run", "on_exit", "on_error","type"]
+
+    attributes = ["run", "on_exit", "on_error", "type"]
     active_attributes = ["name", "operator", "arguments"]
 
     def __init__(self, operator, arguments={}, name=None, type=None, **kwargs):
@@ -33,7 +37,9 @@ class Task:
         self.type = type if type else "ophidia"
         self.name = name
         self.operator = operator
-        self.arguments = ["{0}={1}".format(k, arguments[k]) for k in arguments.keys()]
+        self.arguments = [
+            "{0}={1}".format(k, arguments[k]) for k in arguments.keys()
+        ]
         self.dependencies = []
         self.__dict__.update(kwargs)
 
@@ -62,10 +68,13 @@ class Task:
 
         Example
         -------
-        t2 = Task(name="Sample task1", operator='oph_reduce', arguments={'operation': 'avg'})
-        t3 = Task(name="Sample task2", operator='oph_aggregate', arguments={'operation': 'max'})
+        t2 = Task(name="Sample task1", operator='oph_reduce',
+                    arguments={'operation': 'avg'})
+        t3 = Task(name="Sample task2", operator='oph_aggregate',
+                    arguments={'operation': 'max'})
         t3.addDependency(t2)
         """
+
         def parameter_check(task, argument):
             if argument is not None and not isinstance(argument, str):
                 raise AttributeError("argument must be string")
@@ -81,7 +90,8 @@ class Task:
 
     def copyDependency(self, dependency):
         """
-        Copy a dependency instead of using addDependency, when it has the proper format
+        Copy a dependency instead of using addDependency, when it has the
+        proper format
 
         Parameters
         ----------

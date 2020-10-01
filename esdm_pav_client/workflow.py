@@ -1,14 +1,19 @@
 
+
 class Workflow:
     """
-    Creates or loads a ESDM PAV experiment workflow. It also contains methods to manipulate the workflow.
+    Creates or loads a ESDM PAV experiment workflow. It also contains methods
+    to manipulate the workflow.
 
-    A workflow is a sequence of tasks. Each task can be either independent or dependent on other tasks,
-    for instance it processes the output of other tasks.
+    A workflow is a sequence of tasks. Each task can be either independent or
+    dependent on other tasks, for instance it processes the output of other
+    tasks.
 
     Construction::
-    w1 = Workflow(name="sample", author="sample author", abstract="sample abstract", url=None, sessionid=None, ncores=1,
-                    nhost=1, on_error=None, on_exist=None, run=None, cwd=None, cdd=None, cube=None, callback_url=None,
+    w1 = Workflow(name="sample", author="sample author",
+                    abstract="sample abstract", url=None, sessionid=None,
+                    ncores=1, nhost=1, on_error=None, on_exist=None, run=None,
+                    cwd=None, cdd=None, cube=None, callback_url=None,
                     output_format=None, host_partition=None, nthreads=None)
 
 
@@ -52,8 +57,24 @@ class Workflow:
         number of threads
 
     """
-    attributes = ["url", "sessionid", "exec_mode", "ncores", "nhost", "on_error", "on_exit", "run", "cwd", "cdd",
-                  "cube", "callback_url", "output_format", "host_partition", "nthreads"]
+
+    attributes = [
+        "url",
+        "sessionid",
+        "exec_mode",
+        "ncores",
+        "nhost",
+        "on_error",
+        "on_exit",
+        "run",
+        "cwd",
+        "cdd",
+        "cube",
+        "callback_url",
+        "output_format",
+        "host_partition",
+        "nthreads",
+    ]
     active_attributes = ["name", "author", "abstract"]
     task_attributes = ["run", "on_exit", "on_error", "type"]
     task_name_counter = 1
@@ -89,11 +110,13 @@ class Workflow:
         Raises
         ------
         AttributeError
-            If the task name is already in the workflow or if a dependency is not fulfilled
+            If the task name is already in the workflow or if a dependency is
+            not fulfilled
 
         Example
         -------
-        t1 = Task(name="sample task", operator='oph_reduce', arguments={'operation': 'avg'})
+        t1 = Task(name="sample task", operator='oph_reduce',
+                    arguments={'operation': 'avg'})
         w1.addTask(t1)
         """
         if "name" not in task.__dict__.keys() or task.name is None:
@@ -103,7 +126,9 @@ class Workflow:
         if task.__dict__["dependencies"]:
             for dependency in task.__dict__["dependencies"]:
                 # print([task.__dict__["name"] for task in self.tasks])
-                if dependency["task"] not in [task.__dict__["name"] for task in self.tasks]:
+                if dependency["task"] not in [
+                    task.__dict__["name"] for task in self.tasks
+                ]:
                     raise AttributeError("dependency not fulfilled")
         self.task_name_counter += 1
         # self.tasks.append(task.__dict__)
@@ -111,7 +136,8 @@ class Workflow:
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV workflow the esdm_pav_client.task.Task object with the given task name
+        Retrieve from the ESDM PAV workflow the esdm_pav_client.task.Task
+        object with the given task name
 
         Parameters
         ----------
@@ -127,7 +153,8 @@ class Workflow:
 
         Example
         -------
-        t1 = Task(name="task_one", operator="oph_reduce", arguments={'operation': 'avg'})
+        t1 = Task(name="task_one", operator="oph_reduce",
+                    arguments={'operation': 'avg'})
         task = w1.getTask(taskname="task_one")
         """
         tasks = [t for t in self.tasks if t["name"] == taskname]
@@ -143,37 +170,45 @@ class Workflow:
         Parameters
         ----------
         workflowname : str
-            The path to the ESDM PAV document file where the workflow is being saved
+            The path to the ESDM PAV document file where the workflow is being
+            saved
 
         Example
         -------
         from esdm_pav_client import Workflow
-        w1 = Workflow(name="sample name", author="sample author", abstract="sample abstract")
+        w1 = Workflow(name="sample name", author="sample author",
+                        abstract="sample abstract")
         w1.save("sample_workflow")
 
         Raises
         ------
         AttributeError
-            If worfklowname, which is the variable of the file, is not a string or it's empty
+            If worfklowname is not a string or it is empty
         """
         import json
         import os
+
         if not isinstance(workflowname, str):
             raise AttributeError("workflowname must be string")
         if len(workflowname) == 0:
-            raise AttributeError("workflowname must contain more than 1 characters")
+            raise AttributeError(
+                "workflowname must contain more than 1 characters"
+            )
         data = dict(self.__dict__)
         if "task_name_counter" in data.keys():
             del data["task_name_counter"]
         if not workflowname.endswith(".json"):
             workflowname += ".json"
         data["tasks"] = [t.__dict__ for t in self.tasks]
-        with open(os.path.join(os.getcwd(), workflowname), 'w') as fp:
+        with open(os.path.join(os.getcwd(), workflowname), "w") as fp:
             json.dump(data, fp, indent=4)
 
-    def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
+    def newTask(
+        self, operator, arguments={}, dependencies={}, name=None, **kwargs
+    ):
         """
-        Adds a new Task in the ESDM PAV experiment workflow without the need of creating a esdm_pav_client.task.Task object
+        Adds a new Task in the ESDM PAV experiment workflow without the need
+        of creating a esdm_pav_client.task.Task object
 
         Attributes
         ----------
@@ -200,12 +235,15 @@ class Workflow:
         Raises
         ------
         AttributeError
-            Raises an AttributeError if the given arguments are not on the task's attributes
+            Raises an AttributeError if the given arguments are not of the
+            proper type or are not defined by the schema
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="sample author", abstract="sample abstract")
-        t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'}, dependencies={})
+        w1 = Workflow(name="Experiment 1", author="sample author",
+                        abstract="sample abstract")
+        t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+                          dependencies={})
         """
         from .task import Task
 
@@ -216,7 +254,7 @@ class Workflow:
                 raise AttributeError("arguments must be a dict")
             if not isinstance(dependencies, dict):
                 raise AttributeError("dependencies must be a dict")
-            if not isinstance(name, str) and name != None:
+            if not isinstance(name, str) and name is not None:
                 raise AttributeError("name must be a string")
 
         parameter_check(operator, arguments, dependencies, name)
@@ -243,7 +281,8 @@ class Workflow:
         workflow : <class 'esdm_pav_client.workflow.Workflow'>
             The workflow that will be embeded into our main workflow
         params : dict of keywords
-            a dict of keywords that will be used to replace placeholders in the tasks
+            a dict of keywords that will be used to replace placeholders in
+            the tasks
         dependencies : list, optional
             list of dependencies
         name : str, optional
@@ -256,16 +295,22 @@ class Workflow:
         Raises
         ------
         AttributeError
-            Raises AttributeError when there's an error with the workflows (same name or non-existent), or when the
-            dependencies are not fulfilled
+            Raises AttributeError when there's an error with the workflows
+            (same name or non-existent), or when the dependencies are not
+            fulfilled
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="sample author 1", abstract="sample abstract 1")
-        w2 = Workflow(name="Experiment 2", author="sample author 2", abstract="sample abstract 2")
+        w1 = Workflow(name="Experiment 1", author="sample author 1",
+                        abstract="sample abstract 1")
+        w2 = Workflow(name="Experiment 2", author="sample author 2",
+                        abstract="sample abstract 2")
         t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2, params={}, dependencies=[])
+        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2,
+                                         params={}, dependencies=[])
         """
+
+        from .task import Task
 
         def parameter_check(params, dependencies, name):
             if not isinstance(params, dict):
@@ -285,7 +330,9 @@ class Workflow:
             if len(dependency.keys()) > 2:
                 raise AttributeError("Wrong dependency arguments")
             elif len(dependency.keys()) == 2:
-                if ("task" not in dependency.keys()) or ("argument" not in dependency.keys()):
+                if ("task" not in dependency.keys()) or (
+                    "argument" not in dependency.keys()
+                ):
                     raise AttributeError("Wrong dependency arguments")
             else:
                 if "task" not in dependency.keys():
@@ -298,7 +345,10 @@ class Workflow:
                     if len(dependency.keys()) == 1:
                         new_task.addDependency(task=dependency["task"])
                     else:
-                        new_task.addDependency(task=dependency["task"], argument=dependency["argument"])
+                        new_task.addDependency(
+                            task=dependency["task"],
+                            argument=dependency["argument"],
+                        )
 
         def add_dependencies(task, new_task, prefix):
             if len(task.dependencies) > 0:
@@ -314,24 +364,39 @@ class Workflow:
             if given_name:
                 return "{0}_{1}".format(given_name, previous_name)
             else:
-                return "{0}_{1}_{2}".format(self.name, str(task_id), previous_name)
+                return "{0}_{1}_{2}".format(
+                    self.name, str(task_id), previous_name
+                )
 
         def check_replace_args(params, task_arguments):
             import re
+
             new_task_arguments = {}
             for k in task_arguments:
-                if re.search(r'(\$.*)', k):
-                    if re.findall(r'(\$.*)', k)[0] in params.keys():
-                        new_task_arguments[re.sub(r"(\$.*)", params[re.findall(r'(\$.*)', k)[0]], k)] = task_arguments[k]
+                if re.search(r"(\$.*)", k):
+                    if re.findall(r"(\$.*)", k)[0] in params.keys():
+                        new_task_arguments[
+                            re.sub(
+                                r"(\$.*)",
+                                params[re.findall(r"(\$.*)", k)[0]],
+                                k,
+                            )
+                        ] = task_arguments[k]
                     else:
                         new_task_arguments[k] = task_arguments[k]
                 else:
                     new_task_arguments[k] = task_arguments[k]
             for k in task_arguments:
-                if re.search(r'(\$.*)', task_arguments[k]):
-                    if re.findall(r'(\$.*)', task_arguments[k])[0] in params.keys():
-                        new_task_arguments[k] = re.sub(r"(\$.*)", params[re.findall(r'(\$.*)', task_arguments[k])[0]],
-                                                       task_arguments[k])
+                if re.search(r"(\$.*)", task_arguments[k]):
+                    if (
+                        re.findall(r"(\$.*)", task_arguments[k])[0]
+                        in params.keys()
+                    ):
+                        new_task_arguments[k] = re.sub(
+                            r"(\$.*)",
+                            params[re.findall(r"(\$.*)", task_arguments[k])[0]],
+                            task_arguments[k],
+                        )
                     else:
                         new_task_arguments[k] = task_arguments[k]
                 else:
@@ -347,8 +412,14 @@ class Workflow:
         for task in workflow.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
             task_id += 1
-            new_arguments = check_replace_args(params, task.reverted_arguments())
-            new_task = Task(operator=task.operator, arguments=new_arguments, name=new_task_name)
+            new_arguments = check_replace_args(
+                params, task.reverted_arguments()
+            )
+            new_task = Task(
+                operator=task.operator,
+                arguments=new_arguments,
+                name=new_task_name,
+            )
             find_root_tasks_add_dependencies(task, dependencies, new_task)
             add_dependencies(task, new_task, name)
             all_tasks.append(new_task)
@@ -377,7 +448,8 @@ class Workflow:
         IOError
             Raises IOError if the file does not exist
         JSONDecodeError
-            Raises JSONDecodeError if the file does not containt a valid JSON structure
+            Raises JSONDecodeError if the file does not containt a valid JSON
+            structure
 
         Example
         -------
@@ -387,6 +459,7 @@ class Workflow:
         def file_check(filename):
             import os
             import json
+
             if not os.path.isfile(filename):
                 raise IOError("File does not exist")
             else:
@@ -402,14 +475,26 @@ class Workflow:
 
         def start_workflow(data):
             from .task import Task
+
             workflow = Workflow(name=data["name"])
             del data["name"]
             attrs = {k: data[k] for k in data if k != "name" and k != "tasks"}
             workflow.__dict__.update(attrs)
             for d in data["tasks"]:
-                new_task = Task(operator=d["operator"], name=d["name"],
-                                arguments={a.split("=")[0]: a.split("=")[1] for a in d["arguments"]})
-                new_task.__dict__.update({k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"})
+                new_task = Task(
+                    operator=d["operator"],
+                    name=d["name"],
+                    arguments={
+                        a.split("=")[0]: a.split("=")[1] for a in d["arguments"]
+                    },
+                )
+                new_task.__dict__.update(
+                    {
+                        k: d[k]
+                        for k in d
+                        if k != "name" and k != "operator" and k != "arguments"
+                    }
+                )
                 workflow.addTask(new_task)
             return workflow
 
@@ -440,7 +525,8 @@ class Workflow:
         Raises
         ------
         AttributeError
-            Raises AttributeError in case of failure to connect to the PAV runtime
+            Raises AttributeError in case of failure to connect to the PAV
+            runtime
 
 
         Example
@@ -448,13 +534,16 @@ class Workflow:
         w1 = Workflow.load("workflow.json")
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
-        from PyOphidia import cube, client
+        from PyOphidia import client
 
         def convert_workflow_to_json():
             import json
+
             new_workflow = dict(self.__dict__)
             if "tasks" in new_workflow.keys():
-                new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
+                new_workflow["tasks"] = [
+                    t.__dict__ for t in new_workflow["tasks"]
+                ]
             return json.dumps(new_workflow)
 
         def param_check(username, server, port, password):
@@ -467,10 +556,12 @@ class Workflow:
             if not isinstance(password, str):
                 raise AttributeError("password must be string")
 
-        username="oph-test"
-        password="abcd"
+        username = "oph-test"
+        password = "abcd"
         param_check(username, server, port, password)
-        po_client = client.Client(username=username, password=password, server=server, port=port)
+        po_client = client.Client(
+            username=username, password=password, server=server, port=port
+        )
         if po_client.last_return_value != 0:
             raise AttributeError("failed to connect to the runtime")
         dict_workflow = convert_workflow_to_json()
