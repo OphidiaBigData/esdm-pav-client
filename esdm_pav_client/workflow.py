@@ -532,3 +532,22 @@ class Workflow:
         dict_workflow = convert_workflow_to_json()
         str_workflow = str(dict_workflow)
         po_client.wsubmit(str_workflow, *args)
+
+
+    def check(self, filename="sample"):
+        import tempfile
+        import graphviz
+        dot = graphviz.Digraph(comment=self.name)
+        for task in self.tasks:
+            dot.attr('node', shape="circle")
+            if task.operator == "oph_if":
+                dot.attr('node', shape="rectangle")
+            elif task.operator == "oph_for":
+                dot.attr('node', shape="hexagon")
+            dot.node(task.name, task.name)
+            dot.attr('edge', style="solid")
+            for d in task.dependencies:
+                if "argument" not in d.keys():
+                    dot.attr('edge', style="dotted")
+                dot.edge(d["task"], task.name)
+        dot.render(filename, view=True)
