@@ -210,7 +210,7 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from .task import Task
+        from task import Task
 
         def parameter_check(operator, arguments, dependencies, name):
             if not isinstance(operator, str):
@@ -534,20 +534,24 @@ class Workflow:
         po_client.wsubmit(str_workflow, *args)
 
 
-    def check(self, filename="sample"):
+    def check(self, filename="sample.dot"):
         import tempfile
         import graphviz
+        diamond_commands = ["oph_if", "oph_endif", "oph_else"]
+        hexagonal_commands = ["oph_for", "oph_endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
             dot.attr('node', shape="circle")
-            if task.operator == "oph_if":
-                dot.attr('node', shape="rectangle")
-            elif task.operator == "oph_for":
+            if task.operator in diamond_commands:
+                dot.attr('node', shape="diamond")
+            elif task.operator in hexagonal_commands:
                 dot.attr('node', shape="hexagon")
-            dot.node(task.name, task.name)
+            dot.node(task.name, task.name + "\n" + task.operator)
             dot.attr('edge', style="solid")
             for d in task.dependencies:
                 if "argument" not in d.keys():
                     dot.attr('edge', style="dotted")
                 dot.edge(d["task"], task.name)
         dot.render(filename, view=True)
+
+
