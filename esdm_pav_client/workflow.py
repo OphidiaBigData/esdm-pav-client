@@ -210,7 +210,7 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from task import Task
+        from .task import Task
 
         def parameter_check(operator, arguments, dependencies, name):
             if not isinstance(operator, str):
@@ -533,15 +533,70 @@ class Workflow:
         str_workflow = str(dict_workflow)
         po_client.wsubmit(str_workflow, *args)
 
-
     def check(self, filename="sample.dot"):
+        """
+         Submit an entire ESDM PAV experiment workflow.
+
+         Parameters
+         ----------
+         filename  : str, optional
+             The name of the file that will contain the diagram
+
+         Returns
+         -------
+         None
+
+         Example
+         -------
+         w1 = Workflow(name="Experiment 1", author="sample author",
+                        abstract="sample abstract")
+         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+                          dependencies={})
+         w1.check("myfile.dot")
+         """
         import tempfile
         import graphviz
+
+        def _notebook_check():
+            try:
+                shell = get_ipython().__class__.__name__
+                if shell == 'ZMQInteractiveShell':
+                    return True  # Jupyter notebook or qtconsole
+                elif shell == 'TerminalInteractiveShell':
+                    return False  # Terminal running IPython
+                else:
+                    return False  # Other type (?)
+            except NameError:
+                return False  # Probably standard Python interpreter
+
+        def _find_subgraphs(tasks):
+            list_of_operators = [t.operator for t in tasks]
+            subgraphs_list = [{"start_index": start_index, "operator": "oph_if"} for start_index in
+                              [i for i, t in enumerate(list_of_operators) if t == "oph_if"]]
+            subgraphs_list += [{"start_index": start_index, "operator": "oph_for"} for start_index
+                               in [i for i, t in enumerate(list_of_operators) if t == "oph_for"]]
+            subgraphs_list = sorted(subgraphs_list, key=lambda i: i['start_index'])
+            closing_indexes = sorted([i for i, t in enumerate(list_of_operators)
+                                      if t == "oph_endfor" or t == "oph_endif"])[::-1]
+            for i in range(0, len(subgraphs_list)):
+                subgraphs_list[i]["end_index"] = closing_indexes[i]
+
+            cluster_counter = 0
+            for subgraph in subgraphs_list:
+                new_dot = graphviz.Digraph(name="cluster_{0}".format(str(cluster_counter)))
+                for i in range(subgraph["start_index"], subgraph["end_index"] + 1):
+                    new_dot.attr('node')
+                    new_dot.node(tasks[i].name, tasks[i].name + "\n" + tasks[i].operator)
+                subgraph["dot"] = new_dot
+                cluster_counter += 1
+            return subgraphs_list
+
         diamond_commands = ["oph_if", "oph_endif", "oph_else"]
         hexagonal_commands = ["oph_for", "oph_endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
-            dot.attr('node', shape="circle")
+            dot.attr('node', shape="circle", width="2.3", penwidth="3")
+            dot.attr("edge", penwidth="3")
             if task.operator in diamond_commands:
                 dot.attr('node', shape="diamond")
             elif task.operator in hexagonal_commands:
@@ -550,8 +605,17 @@ class Workflow:
             dot.attr('edge', style="solid")
             for d in task.dependencies:
                 if "argument" not in d.keys():
-                    dot.attr('edge', style="dotted")
+                    dot.attr('edge', style="dashed")
                 dot.edge(d["task"], task.name)
-        dot.render(filename, view=True)
-
+        subgraphs = _find_subgraphs(self.tasks)
+        for i in range(0, len(subgraphs)-1):
+            subgraphs[i]["dot"].subgraph(subgraphs[i+1]["dot"])
+        dot.subgraph(subgraphs[0]["dot"])
+        notebook_check = _notebook_check()
+        if notebook_check is True:
+            #TODO change the image dimensions
+            from IPython.display import display
+            display(dot)
+        else:
+            dot.render(filename, view=True)
 
