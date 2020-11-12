@@ -45,6 +45,8 @@ class Workflow:
     task_attributes = ["run", "on_error", "type"]
     task_name_counter = 1
     subworkflow_names = []
+    pyophidia_client = None
+
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
@@ -57,6 +59,36 @@ class Workflow:
         self.exec_mode = "sync"
         self.tasks = []
         self.__dict__.update(kwargs)
+
+    def runtime_connect(self, username="oph-test", password="abcd", server="ophidialab.cmcc.it", port="11732"):
+        from PyOphidia import client
+
+        def param_check(username, server, port, password):
+            if not isinstance(username, str):
+                raise AttributeError("username must be string")
+            if not isinstance(server, str):
+                raise AttributeError("server must be string")
+            if not isinstance(port, str):
+                raise AttributeError("port must be string")
+            if not isinstance(password, str):
+                raise AttributeError("password must be string")
+
+        param_check(username, server, port, password)
+        if self.pyophidia_client is None:
+            self.pyophidia_client = client.Client(
+                username=username, password=password, server=server, port=port
+            )
+            if self.pyophidia_client.last_return_value != 0:
+                raise AttributeError("failed to connect to the runtime")
+
+    def wokrflow_to_json(self):
+        non_workflow_fields = ["pyophidia_client", "task_name_counter"]
+        new_workflow = {k: dict(self.__dict__)[k] for k in dict(self.__dict__).keys() if k not in non_workflow_fields}
+        if "tasks" in new_workflow.keys():
+            new_workflow["tasks"] = [
+                t.__dict__ for t in new_workflow["tasks"]
+            ]
+        return new_workflow
 
     def deinit(self):
         """
@@ -159,12 +191,9 @@ class Workflow:
             raise AttributeError(
                 "workflowname must contain more than 1 characters"
             )
-        data = dict(self.__dict__)
-        if "task_name_counter" in data.keys():
-            del data["task_name_counter"]
+        data = self.wokrflow_to_json()
         if not workflowname.endswith(".json"):
             workflowname += ".json"
-        data["tasks"] = [t.__dict__ for t in self.tasks]
         with open(os.path.join(os.getcwd(), workflowname), "w") as fp:
             json.dump(data, fp, indent=4)
 
@@ -499,43 +528,16 @@ class Workflow:
         w1 = Workflow.load("workflow.json")
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
-        from PyOphidia import client
+        import json
 
-        def convert_workflow_to_json():
-            import json
-
-            new_workflow = dict(self.__dict__)
-            if "tasks" in new_workflow.keys():
-                new_workflow["tasks"] = [
-                    t.__dict__ for t in new_workflow["tasks"]
-                ]
-            return json.dumps(new_workflow)
-
-        def param_check(username, server, port, password):
-            if not isinstance(username, str):
-                raise AttributeError("username must be string")
-            if not isinstance(server, str):
-                raise AttributeError("server must be string")
-            if not isinstance(port, str):
-                raise AttributeError("port must be string")
-            if not isinstance(password, str):
-                raise AttributeError("password must be string")
-
-        username = "oph-test"
-        password = "abcd"
-        param_check(username, server, port, password)
-        po_client = client.Client(
-            username=username, password=password, server=server, port=port
-        )
-        if po_client.last_return_value != 0:
-            raise AttributeError("failed to connect to the runtime")
-        dict_workflow = convert_workflow_to_json()
+        dict_workflow = json.dumps(self.wokrflow_to_json())
         str_workflow = str(dict_workflow)
-        po_client.wsubmit(str_workflow, *args)
+        self.runtime_connect()
+        self.pyophidia_client.wsubmit(str_workflow, *args)
 
-    def check(self, filename="sample.dot"):
+    def check(self, filename="sample.dot", visual=True):
         """
-         Submit an entire ESDM PAV experiment workflow.
+         Perform a workflow validity check and display an graph of the workflow
 
          Parameters
          ----------
@@ -561,13 +563,13 @@ class Workflow:
             try:
                 shell = get_ipython().__class__.__name__
                 if shell == 'ZMQInteractiveShell':
-                    return True  # Jupyter notebook or qtconsole
+                    return True
                 elif shell == 'TerminalInteractiveShell':
-                    return False  # Terminal running IPython
+                    return False
                 else:
-                    return False  # Other type (?)
+                    return False
             except NameError:
-                return False  # Probably standard Python interpreter
+                return False
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
@@ -591,6 +593,18 @@ class Workflow:
                 cluster_counter += 1
             return subgraphs_list
 
+        def _check_workflow_validity():
+            import json
+            self.runtime_connect()
+            workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
+            if workflow_validity[1] == "Workflow is valid":
+                return True
+            else:
+                return False
+
+        workflow_validity = _check_workflow_validity()
+        if visual is False:
+            return workflow_validity
         diamond_commands = ["oph_if", "oph_endif", "oph_else"]
         hexagonal_commands = ["oph_for", "oph_endfor"]
         dot = graphviz.Digraph(comment=self.name)
@@ -618,4 +632,5 @@ class Workflow:
             display(dot)
         else:
             dot.render(filename, view=True)
+
 
