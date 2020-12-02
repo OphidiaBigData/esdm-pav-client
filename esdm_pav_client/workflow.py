@@ -513,8 +513,8 @@ class Workflow:
 
         Returns
         -------
-        None
-
+        last_jobid : <class 'str'>
+            Returns the last_jobid which refers to the submitted workflow job
 
         Raises
         ------
@@ -529,11 +529,14 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
         import json
-
+        self.exec_mode = "async"
         dict_workflow = json.dumps(self.wokrflow_to_json())
         str_workflow = str(dict_workflow)
         self.runtime_connect()
         self.pyophidia_client.wsubmit(str_workflow, *args)
+        self.exec_mode = "sync"
+        last_jobid = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
+        return last_jobid
 
     def check(self, filename="sample.dot", visual=True):
         """
@@ -595,13 +598,12 @@ class Workflow:
 
         def _check_workflow_validity():
             import json
-            self.runtime_connect()
+            self.runtime_connect(username="evachlas", password="T67+H_675yHf")
             workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
             if workflow_validity[1] == "Workflow is valid":
                 return True
             else:
                 return False
-
         workflow_validity = _check_workflow_validity()
         if visual is False:
             return workflow_validity
@@ -633,4 +635,40 @@ class Workflow:
         else:
             dot.render(filename, view=True)
 
+    def cancel(self, last_jobid):
+        """
+        Cancel a workflow that has been submitted
 
+        Parameters
+        ----------
+        last_jobid  : str
+            The job id of the submitted workflow
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        AttributeError
+            Raises AttributeError in case of wrong last_jobid parameter
+
+        Example
+        -------
+        w1 = Workflow(name="Experiment 1", author="sample author",
+                      abstract="sample abstract")
+        t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+                        dependencies={})
+        last_jobid = w1.submit()
+        w1.cancel(last_jobid)
+        """
+        def check_convert_last_jobid(last_jobid):
+            if isinstance(last_jobid, str):
+                return last_jobid
+            elif isinstance(last_jobid, int):
+                return str(last_jobid)
+            else:
+                raise AttributeError("last_jobid is not")
+        last_jobid = check_convert_last_jobid(last_jobid)
+        self.runtime_connect()
+        cancel = self.pyophidia_client.submit(query="operator=oph_cancel;id={0};exec_mode=async;".format(last_jobid))
