@@ -239,7 +239,7 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from .task import Task
+        from task import Task
 
         def parameter_check(operator, arguments, dependencies, name):
             if not isinstance(operator, str):
@@ -598,7 +598,7 @@ class Workflow:
 
         def _check_workflow_validity():
             import json
-            self.runtime_connect(username="evachlas", password="T67+H_675yHf")
+            self.runtime_connect()
             workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
             if workflow_validity[1] == "Workflow is valid":
                 return True
@@ -672,3 +672,115 @@ class Workflow:
         last_jobid = check_convert_last_jobid(last_jobid)
         self.runtime_connect()
         cancel = self.pyophidia_client.submit(query="operator=oph_cancel;id={0};exec_mode=async;".format(last_jobid))
+
+    def monitor(self, workflow_id, frequency=10, iterative=True, visual_mode=True):
+        import graphviz
+        import json
+        import time
+
+        def _check_workflow_validity():
+            import json
+            self.runtime_connect()
+            workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
+            if not workflow_validity[1] == "Workflow is valid":
+                raise AttributeError("Workflow is not valid")
+
+        def _find_subgraphs(tasks):
+            list_of_operators = [t.operator for t in tasks]
+            subgraphs_list = [{"start_index": start_index, "operator": "oph_if"} for start_index in
+                              [i for i, t in enumerate(list_of_operators) if t == "oph_if"]]
+            subgraphs_list += [{"start_index": start_index, "operator": "oph_for"} for start_index
+                               in [i for i, t in enumerate(list_of_operators) if t == "oph_for"]]
+            subgraphs_list = sorted(subgraphs_list, key=lambda i: i['start_index'])
+            closing_indexes = sorted([i for i, t in enumerate(list_of_operators)
+                                      if t == "oph_endfor" or t == "oph_endif"])[::-1]
+            for i in range(0, len(subgraphs_list)):
+                subgraphs_list[i]["end_index"] = closing_indexes[i]
+
+            cluster_counter = 0
+            for subgraph in subgraphs_list:
+                new_dot = graphviz.Digraph(name="cluster_{0}".format(str(cluster_counter)))
+                for i in range(subgraph["start_index"], subgraph["end_index"] + 1):
+                    new_dot.attr('node')
+                    new_dot.node(tasks[i].name, tasks[i].name + "\n" + tasks[i].operator)
+                subgraph["dot"] = new_dot
+                cluster_counter += 1
+            return subgraphs_list
+
+        def _check_workflow_status(json_response):
+            for res in json_response["response"]:
+                if res["objkey"] == "workflow_status":
+                    return res["objcontent"][0]["message"]
+
+        def _extract_info(json_response):
+            task_dict = {}
+            for res in json_response["response"]:
+                if res["objkey"] == "workflow_list":
+                    task_name_index = res["objcontent"][0]["rowkeys"].index("TASK NAME")
+                    status_index = res["objcontent"][0]["rowkeys"].index("EXIT STATUS")
+                    for task in res["objcontent"][0]["rowvalues"]:
+                        task_dict[task[int(task_name_index)]] = task[int(status_index)]
+            return task_dict
+
+        def _draw(json_response, oph_color_dictionary):
+            task_dict = _extract_info(json_response)
+            diamond_commands = ["oph_if", "oph_endif", "oph_else"]
+            hexagonal_commands = ["oph_for", "oph_endfor"]
+            dot = graphviz.Digraph(comment=self.name)
+            for task in self.tasks:
+                dot.attr('node', shape="circle", width="2.3", penwidth="3", style="")
+                if task.name in task_dict:
+                    dot.attr("node", fillcolor=oph_color_dictionary[task_dict[task.name]], style="filled")
+                dot.attr("edge", penwidth="3")
+                if task.operator in diamond_commands:
+                    dot.attr('node', shape="diamond")
+                elif task.operator in hexagonal_commands:
+                    dot.attr('node', shape="hexagon")
+                dot.node(task.name, task.name + "\n" + task.operator)
+                dot.attr('edge', style="solid")
+                for d in task.dependencies:
+                    if "argument" not in d.keys():
+                        dot.attr('edge', style="dashed")
+                    dot.edge(d["task"], task.name)
+            subgraphs = _find_subgraphs(self.tasks)
+            for i in range(0, len(subgraphs) - 1):
+                subgraphs[i]["dot"].subgraph(subgraphs[i + 1]["dot"])
+            if len(subgraphs) > 0:
+                dot.subgraph(subgraphs[0]["dot"])
+            dot.render("sample", view=True)
+
+        oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
+                                "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
+                                "OPH_STATUS_FAILED": "red", "OPH_STATUS_SKIPPED": "yellow"}
+        _check_workflow_validity()
+        self.runtime_connect()
+        if visual_mode is False and iterative is False:
+            self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+            json_response = json.loads(self.pyophidia_client.last_response)
+            workflow_status = _check_workflow_status(json_response)
+            print(workflow_status)
+            return workflow_status
+        elif visual_mode is False and iterative is True:
+            while True:
+                self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+                json_response = json.loads(self.pyophidia_client.last_response)
+                workflow_status = _check_workflow_status(json_response)
+                print(workflow_status)
+                if workflow_status != "OPH_STATUS_RUNNING":
+                    return workflow_status
+                time.sleep(frequency)
+        elif visual_mode is True and iterative is False:
+            self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+            json_response = json.loads(self.pyophidia_client.last_response)
+            workflow_status = _check_workflow_status(json_response)
+            _draw(json_response, oph_color_dictionary)
+            return workflow_status
+        else:
+            while True:
+                self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+                json_response = json.loads(self.pyophidia_client.last_response)
+                workflow_status = _check_workflow_status(json_response)
+                _draw(json_response, oph_color_dictionary)
+                if workflow_status != "OPH_STATUS_RUNNING":
+                    return workflow_status
+                time.sleep(frequency)
