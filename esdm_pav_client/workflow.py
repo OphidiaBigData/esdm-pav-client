@@ -60,7 +60,7 @@ class Workflow:
         self.tasks = []
         self.__dict__.update(kwargs)
 
-    def runtime_connect(self, username="oph-test", password="abcd", server="ophidialab.cmcc.it", port="11732"):
+    def runtime_connect(self, username="oph-test", password="abcd", server="127.0.0.1", port="11732"):
         from PyOphidia import client
 
         def param_check(username, server, port, password):
@@ -239,7 +239,7 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from task import Task
+        from .task import Task
 
         def parameter_check(operator, arguments, dependencies, name):
             if not isinstance(operator, str):
@@ -671,7 +671,7 @@ class Workflow:
                 raise AttributeError("last_jobid is not")
         last_jobid = check_convert_last_jobid(last_jobid)
         self.runtime_connect()
-        cancel = self.pyophidia_client.submit(query="operator=oph_cancel;id={0};exec_mode=async;".format(last_jobid))
+        cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(last_jobid))
 
     def monitor(self, workflow_id, frequency=10, iterative=True, visual_mode=True):
         import graphviz
@@ -751,36 +751,30 @@ class Workflow:
 
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
                                 "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
-                                "OPH_STATUS_FAILED": "red", "OPH_STATUS_SKIPPED": "yellow"}
+                                "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow"}
         _check_workflow_validity()
         self.runtime_connect()
-        if visual_mode is False and iterative is False:
-            self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
-            json_response = json.loads(self.pyophidia_client.last_response)
-            workflow_status = _check_workflow_status(json_response)
-            print(workflow_status)
-            return workflow_status
-        elif visual_mode is False and iterative is True:
+        self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+        json_response = json.loads(self.pyophidia_client.last_response)
+        workflow_status = _check_workflow_status(json_response)
+
+        if iterative is True:
             while True:
+                if visual_mode is True:
+                    _draw(json_response, oph_color_dictionary)
+                else:
+                    print(workflow_status)
+                if workflow_status != "OPH_STATUS_RUNNING" and workflow_status != "OPH_STATUS_PENDING":
+                    _draw(json_response, oph_color_dictionary)
+                    return workflow_status
+                time.sleep(frequency)
                 self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
                 json_response = json.loads(self.pyophidia_client.last_response)
                 workflow_status = _check_workflow_status(json_response)
-                print(workflow_status)
-                if workflow_status != "OPH_STATUS_RUNNING":
-                    return workflow_status
-                time.sleep(frequency)
-        elif visual_mode is True and iterative is False:
-            self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
-            json_response = json.loads(self.pyophidia_client.last_response)
-            workflow_status = _check_workflow_status(json_response)
-            _draw(json_response, oph_color_dictionary)
-            return workflow_status
         else:
-            while True:
-                self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
-                json_response = json.loads(self.pyophidia_client.last_response)
-                workflow_status = _check_workflow_status(json_response)
+            if visual_mode is True:
                 _draw(json_response, oph_color_dictionary)
-                if workflow_status != "OPH_STATUS_RUNNING":
-                    return workflow_status
-                time.sleep(frequency)
+                return workflow_status
+            else:
+                print(workflow_status)
+                return workflow_status
