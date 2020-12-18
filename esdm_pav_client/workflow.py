@@ -60,6 +60,20 @@ class Workflow:
         self.tasks = []
         self.__dict__.update(kwargs)
 
+
+    @staticmethod
+    def _notebook_check():
+        try:
+            shell = get_ipython().__class__.__name__
+            if shell == 'ZMQInteractiveShell':
+                return True
+            elif shell == 'TerminalInteractiveShell':
+                return False
+            else:
+                return False
+        except NameError:
+            return False
+
     def runtime_connect(self, username="oph-test", password="abcd", server="127.0.0.1", port="11732"):
         from PyOphidia import client
 
@@ -562,17 +576,6 @@ class Workflow:
         import tempfile
         import graphviz
 
-        def _notebook_check():
-            try:
-                shell = get_ipython().__class__.__name__
-                if shell == 'ZMQInteractiveShell':
-                    return True
-                elif shell == 'TerminalInteractiveShell':
-                    return False
-                else:
-                    return False
-            except NameError:
-                return False
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
@@ -627,7 +630,7 @@ class Workflow:
         for i in range(0, len(subgraphs)-1):
             subgraphs[i]["dot"].subgraph(subgraphs[i+1]["dot"])
         dot.subgraph(subgraphs[0]["dot"])
-        notebook_check = _notebook_check()
+        notebook_check = self._notebook_check()
         if notebook_check is True:
             #TODO change the image dimensions
             from IPython.display import display
@@ -674,6 +677,40 @@ class Workflow:
         cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(last_jobid))
 
     def monitor(self, workflow_id, frequency=10, iterative=True, visual_mode=True):
+        """
+        Monitors the progress of a workflow
+
+        Parameters
+        ----------
+        workflow_id  : str
+            The id of the workflow to be monitored
+        frequency : int
+            The frequency in seconds to receive the updates
+        iterative: bool
+            True for receiving updates periodically, based on the frequency, or False to receive updates only once
+        visual_mode: bool
+            True for receiving the workflow as an image or False to receive updates only in text
+
+        Returns
+        -------
+        workflow_status : <class 'str'>
+            Returns the workflow status as a string
+
+        Raises
+        ------
+        AttributeError
+            Raises AttributeError when workflow is not valid
+
+        Example
+        -------
+         w1 = Workflow(name="Experiment 1", author="sample author",
+                        abstract="sample abstract")
+         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+                          dependencies={})
+         w1.runtime_connect()
+         last_jobid = w1.submit()
+         w1.monitor(workflow_id=last_jobid, frequency=100, iterative=True, visual_mode=True)
+        """
         import graphviz
         import json
         import time
@@ -722,14 +759,14 @@ class Workflow:
                         task_dict[task[int(task_name_index)]] = task[int(status_index)]
             return task_dict
 
-        def _draw(json_response, oph_color_dictionary):
+        def _draw(json_response, oph_color_dictionary=None):
             task_dict = _extract_info(json_response)
             diamond_commands = ["oph_if", "oph_endif", "oph_else"]
             hexagonal_commands = ["oph_for", "oph_endfor"]
             dot = graphviz.Digraph(comment=self.name)
             for task in self.tasks:
                 dot.attr('node', shape="circle", width="2.3", penwidth="3", style="")
-                if task.name in task_dict:
+                if task.name in task_dict and oph_color_dictionary:
                     dot.attr("node", fillcolor=oph_color_dictionary[task_dict[task.name]], style="filled")
                 dot.attr("edge", penwidth="3")
                 if task.operator in diamond_commands:
@@ -747,7 +784,14 @@ class Workflow:
                 subgraphs[i]["dot"].subgraph(subgraphs[i + 1]["dot"])
             if len(subgraphs) > 0:
                 dot.subgraph(subgraphs[0]["dot"])
-            dot.render("sample", view=True)
+            notebook_check = self._notebook_check()
+            if notebook_check is True:
+                # TODO change the image dimensions
+                from IPython.display import display,clear_output
+                clear_output(wait=True)
+                display(dot)
+            else:
+                dot.render("sample", view=True)
 
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
                                 "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
@@ -757,7 +801,6 @@ class Workflow:
         self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         workflow_status = _check_workflow_status(json_response)
-
         if iterative is True:
             while True:
                 if visual_mode is True:
@@ -765,7 +808,6 @@ class Workflow:
                 else:
                     print(workflow_status)
                 if workflow_status != "OPH_STATUS_RUNNING" and workflow_status != "OPH_STATUS_PENDING":
-                    _draw(json_response, oph_color_dictionary)
                     return workflow_status
                 time.sleep(frequency)
                 self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
