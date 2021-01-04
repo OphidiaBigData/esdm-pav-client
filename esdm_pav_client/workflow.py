@@ -74,26 +74,27 @@ class Workflow:
         except NameError:
             return False
 
-    def runtime_connect(self, username="oph-test", password="abcd", server="127.0.0.1", port="11732"):
+    def __runtime_connect(self, username="oph-test", password="abcd", server="127.0.0.1", port="11732"):
         from PyOphidia import client
-
-        def param_check(username, server, port, password):
-            if not isinstance(username, str):
-                raise AttributeError("username must be string")
-            if not isinstance(server, str):
-                raise AttributeError("server must be string")
-            if not isinstance(port, str):
-                raise AttributeError("port must be string")
-            if not isinstance(password, str):
-                raise AttributeError("password must be string")
-
-        param_check(username, server, port, password)
+        self.__param_check([{"name": "username", "value": username, "type": str},
+                            {"name": "server", "value": server, "type": str},
+                            {"name": "port", "value": port, "type": str},
+                            {"name": "password", "value": password, "type": str}])
         if self.pyophidia_client is None:
             self.pyophidia_client = client.Client(
                 username=username, password=password, server=server, port=port
             )
             if self.pyophidia_client.last_return_value != 0:
                 raise AttributeError("failed to connect to the runtime")
+
+    def __param_check(self, params=[]):
+        for param in params:
+            if "NoneValue" in param.keys():
+                if not isinstance(param["value"], param["type"]) and param["value"] is not None:
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
+            else:
+                if not isinstance(param["value"], param["type"]):
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
         non_workflow_fields = ["pyophidia_client", "task_name_counter"]
@@ -255,17 +256,10 @@ class Workflow:
         """
         from .task import Task
 
-        def parameter_check(operator, arguments, dependencies, name):
-            if not isinstance(operator, str):
-                raise AttributeError("operator must be a string")
-            if not isinstance(arguments, dict):
-                raise AttributeError("arguments must be a dict")
-            if not isinstance(dependencies, dict):
-                raise AttributeError("dependencies must be a dict")
-            if not isinstance(name, str) and name is not None:
-                raise AttributeError("name must be a string")
-
-        parameter_check(operator, arguments, dependencies, name)
+        self.__param_check([{"name": "operator", "value": operator, "type": str},
+                            {"name": "arguments", "value": arguments, "type": dict},
+                            {"name": "dependencies", "value": dependencies, "type": dict},
+                            {"name": "name", "value": name, "type": str, "NoneValue": True}])
         t = Task(operator=operator, arguments=arguments, name=name)
         if dependencies:
             for k in dependencies.keys():
@@ -320,14 +314,6 @@ class Workflow:
 
         from .task import Task
 
-        def parameter_check(params, dependencies, name):
-            if not isinstance(params, dict):
-                raise AttributeError("params must be dict")
-            if not isinstance(dependencies, dict):
-                raise AttributeError("dependencies must be dict")
-            if not isinstance(name, str):
-                raise AttributeError("name must be string")
-
         def validate_workflow(w1, w2):
             if not isinstance(w2, Workflow) or w1.name == w2.name:
                 raise AttributeError("Wrong workflow or same workflows")
@@ -378,7 +364,6 @@ class Workflow:
 
         def check_replace_args(params, task_arguments):
             import re
-
             new_task_arguments = {}
             for k in task_arguments:
                 if re.search(r"(\$.*)", k):
@@ -412,7 +397,10 @@ class Workflow:
 
             return new_task_arguments
 
-        parameter_check(params, dependencies, name)
+        self.__param_check([{"name": "workflow", "value": workflow, "type": str},
+                            {"name": "params", "value": params, "type": str},
+                            {"name": "dependencies", "value": dependencies, "type": dict},
+                            {"name": "name", "value": name, "type": str, "NoneValue": True}])
         validate_workflow(self, workflow)
         task_id = 1
         all_tasks = []
@@ -546,7 +534,7 @@ class Workflow:
         self.exec_mode = "async"
         dict_workflow = json.dumps(self.wokrflow_to_json())
         str_workflow = str(dict_workflow)
-        self.runtime_connect()
+        self.__runtime_connect()
         self.pyophidia_client.wsubmit(str_workflow, *args)
         self.exec_mode = "sync"
         last_jobid = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
@@ -576,7 +564,6 @@ class Workflow:
         import tempfile
         import graphviz
 
-
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
             subgraphs_list = [{"start_index": start_index, "operator": "oph_if"} for start_index in
@@ -601,13 +588,17 @@ class Workflow:
 
         def _check_workflow_validity():
             import json
-            self.runtime_connect()
+            self.__runtime_connect()
             workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
             if workflow_validity[1] == "Workflow is valid":
                 return True
             else:
                 return False
+
+
         workflow_validity = _check_workflow_validity()
+        self.__param_check([{"name": "filename", "value": filename, "type": str},
+                            {"name": "visual", "value": visual, "type": bool}])
         if visual is False:
             return workflow_validity
         diamond_commands = ["oph_if", "oph_endif", "oph_else"]
@@ -627,9 +618,10 @@ class Workflow:
                     dot.attr('edge', style="dashed")
                 dot.edge(d["task"], task.name)
         subgraphs = _find_subgraphs(self.tasks)
-        for i in range(0, len(subgraphs)-1):
-            subgraphs[i]["dot"].subgraph(subgraphs[i+1]["dot"])
-        dot.subgraph(subgraphs[0]["dot"])
+        if len(subgraphs) > 1:
+            for i in range(0, len(subgraphs)-1):
+                subgraphs[i]["dot"].subgraph(subgraphs[i+1]["dot"])
+            dot.subgraph(subgraphs[0]["dot"])
         notebook_check = self._notebook_check()
         if notebook_check is True:
             #TODO change the image dimensions
@@ -672,8 +664,10 @@ class Workflow:
                 return str(last_jobid)
             else:
                 raise AttributeError("last_jobid is not")
+
+        self.__param_check([{"name": last_jobid, "value": last_jobid, "type": str}])
         last_jobid = check_convert_last_jobid(last_jobid)
-        self.runtime_connect()
+        self.__runtime_connect()
         cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(last_jobid))
 
     def monitor(self, workflow_id, frequency=10, iterative=True, visual_mode=True):
@@ -707,7 +701,7 @@ class Workflow:
                         abstract="sample abstract")
          t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
-         w1.runtime_connect()
+         w1.__runtime_connect()
          last_jobid = w1.submit()
          w1.monitor(workflow_id=last_jobid, frequency=100, iterative=True, visual_mode=True)
         """
@@ -717,7 +711,7 @@ class Workflow:
 
         def _check_workflow_validity():
             import json
-            self.runtime_connect()
+            self.__runtime_connect()
             workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
             if not workflow_validity[1] == "Workflow is valid":
                 raise AttributeError("Workflow is not valid")
@@ -793,11 +787,15 @@ class Workflow:
             else:
                 dot.render("sample", view=True)
 
+        self.__param_check(params=[{"name": "workflow_id", "value": workflow_id, "type": str},
+                                   {"name": "frequency", "value": frequency, "type": int},
+                                   {"name": "iterative", "value": iterative, "type": bool},
+                                   {"name": "visual_mode", "value": visual_mode, "type": bool}])
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
                                 "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
                                 "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow"}
         _check_workflow_validity()
-        self.runtime_connect()
+        self.__runtime_connect()
         self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         workflow_status = _check_workflow_status(json_response)
