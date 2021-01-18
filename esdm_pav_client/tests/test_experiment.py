@@ -14,7 +14,7 @@ t2 = w1.newTask(name="mytask1", operator='oph_script',
                 arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={})
 t3 = w1.newTask(name="mytask2", operator='oph_script',
                 arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={t2: None})
-last_jobid = w1.submit()
+w1.submit()
 
 w2 = Workflow(
     name="Sample_Workflow_template",
@@ -162,35 +162,26 @@ def test_submit(server, port):
 def test_check(filename, visual):
     w1.check(filename=filename, visual=visual)
 
-# First and third should pass
-@pytest.mark.parametrize(
-    ("last_jobid"),
-    [
-        (last_jobid),
-        (15),
-        ("15"),
-        (None)
-    ]
-)
-def test_cancel(last_jobid):
-    w1.cancel(last_jobid)
+
+def test_cancel():
+    w1.cancel()
 
 # First five should pass
 @pytest.mark.parametrize(
-    ("workflow_id", "frequency", "iterative", "visual_mode"),
+    ("frequency", "iterative", "visual_mode"),
     [
-        (last_jobid, 10, True, False),
-        (last_jobid, 10, True, True),
-        (last_jobid, 10, False, True),
-        (last_jobid, 10, False, False),
-        (last_jobid, 100, True, False),
-        (10, 10, True, False),
-        (10, "10", True, False),
-        (last_jobid, 10, "True", False),
-        (last_jobid, 10, True, "False"),
-        (last_jobid, None, True, False),
+        (10, True, False),
+        (10, True, True),
+        (10, False, True),
+        (10, False, False),
+        (100, True, False),
+        (10, True, False),
+        ("10", True, False),
+        (10, "True", False),
+        (10, True, "False"),
+        (None, True, False),
 
     ]
 )
-def test_monitor(workflow_id, frequency, iterative, visual_mode):
-    w1.monitor(workflow_id=workflow_id, frequency=frequency, iterative=iterative, visual_mode=visual_mode)
+def test_monitor(frequency, iterative, visual_mode):
+    w1.monitor(frequency=frequency, iterative=iterative, visual_mode=visual_mode)

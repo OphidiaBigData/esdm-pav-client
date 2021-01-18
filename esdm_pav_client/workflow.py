@@ -46,7 +46,7 @@ class Workflow:
     task_name_counter = 1
     subworkflow_names = []
     pyophidia_client = None
-
+    workflow_id = None
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
@@ -97,7 +97,7 @@ class Workflow:
                     raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
-        non_workflow_fields = ["pyophidia_client", "task_name_counter"]
+        non_workflow_fields = ["pyophidia_client", "task_name_counter", "workflow_id"]
         new_workflow = {k: dict(self.__dict__)[k] for k in dict(self.__dict__).keys() if k not in non_workflow_fields}
         if "tasks" in new_workflow.keys():
             new_workflow["tasks"] = [
@@ -513,11 +513,6 @@ class Workflow:
             list of arguments to be substituted in the workflow
 
 
-        Returns
-        -------
-        last_jobid : <class 'str'>
-            Returns the last_jobid which refers to the submitted workflow job
-
         Raises
         ------
         AttributeError
@@ -537,8 +532,7 @@ class Workflow:
         self.__runtime_connect()
         self.pyophidia_client.wsubmit(str_workflow, *args)
         self.exec_mode = "sync"
-        last_jobid = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
-        return last_jobid
+        self.worfklow_id = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
 
     def check(self, filename="sample.dot", visual=True):
         """
@@ -630,23 +624,13 @@ class Workflow:
         else:
             dot.render(filename, view=True)
 
-    def cancel(self, last_jobid):
+    def cancel(self):
         """
         Cancel a workflow that has been submitted
-
-        Parameters
-        ----------
-        last_jobid  : str
-            The job id of the submitted workflow
 
         Returns
         -------
         None
-
-        Raises
-        ------
-        AttributeError
-            Raises AttributeError in case of wrong last_jobid parameter
 
         Example
         -------
@@ -654,30 +638,18 @@ class Workflow:
                       abstract="sample abstract")
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                         dependencies={})
-        last_jobid = w1.submit()
-        w1.cancel(last_jobid)
+        w1.submit()
+        w1.cancel()
         """
-        def check_convert_last_jobid(last_jobid):
-            if isinstance(last_jobid, str):
-                return last_jobid
-            elif isinstance(last_jobid, int):
-                return str(last_jobid)
-            else:
-                raise AttributeError("last_jobid is not")
-
-        self.__param_check([{"name": last_jobid, "value": last_jobid, "type": str}])
-        last_jobid = check_convert_last_jobid(last_jobid)
         self.__runtime_connect()
-        cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(last_jobid))
+        cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id))
 
-    def monitor(self, workflow_id, frequency=10, iterative=True, visual_mode=True):
+    def monitor(self, frequency=10, iterative=True, visual_mode=True):
         """
         Monitors the progress of a workflow
 
         Parameters
         ----------
-        workflow_id  : str
-            The id of the workflow to be monitored
         frequency : int
             The frequency in seconds to receive the updates
         iterative: bool
@@ -702,8 +674,8 @@ class Workflow:
          t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
          w1.__runtime_connect()
-         last_jobid = w1.submit()
-         w1.monitor(workflow_id=last_jobid, frequency=100, iterative=True, visual_mode=True)
+         w1.submit()
+         w1.monitor(frequency=100, iterative=True, visual_mode=True)
         """
         import graphviz
         import json
@@ -787,8 +759,7 @@ class Workflow:
             else:
                 dot.render("sample", view=True)
 
-        self.__param_check(params=[{"name": "workflow_id", "value": workflow_id, "type": str},
-                                   {"name": "frequency", "value": frequency, "type": int},
+        self.__param_check(params=[                                   {"name": "frequency", "value": frequency, "type": int},
                                    {"name": "iterative", "value": iterative, "type": bool},
                                    {"name": "visual_mode", "value": visual_mode, "type": bool}])
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
@@ -796,7 +767,7 @@ class Workflow:
                                 "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow"}
         _check_workflow_validity()
         self.__runtime_connect()
-        self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+        self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         workflow_status = _check_workflow_status(json_response)
         if iterative is True:
@@ -808,7 +779,7 @@ class Workflow:
                 if workflow_status != "OPH_STATUS_RUNNING" and workflow_status != "OPH_STATUS_PENDING":
                     return workflow_status
                 time.sleep(frequency)
-                self.pyophidia_client.submit("oph_resume id={0};".format(workflow_id))
+                self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
                 json_response = json.loads(self.pyophidia_client.last_response)
                 workflow_status = _check_workflow_status(json_response)
         else:
