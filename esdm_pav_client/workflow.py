@@ -254,7 +254,7 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from .task import Task
+        from task import Task
 
         self.__param_check([{"name": "operator", "value": operator, "type": str},
                             {"name": "arguments", "value": arguments, "type": dict},
@@ -312,7 +312,7 @@ class Workflow:
                                          params={}, dependencies=[])
         """
 
-        from .task import Task
+        from task import Task
 
         def validate_workflow(w1, w2):
             if not isinstance(w2, Workflow) or w1.name == w2.name:
@@ -397,9 +397,9 @@ class Workflow:
 
             return new_task_arguments
 
-        self.__param_check([{"name": "workflow", "value": workflow, "type": str},
-                            {"name": "params", "value": params, "type": str},
-                            {"name": "dependencies", "value": dependencies, "type": dict},
+        self.__param_check([{"name": "workflow", "value": workflow, "type": Workflow},
+                            {"name": "params", "value": params, "type": dict},
+                            {"name": "dependencies", "value": dependencies, "type": list},
                             {"name": "name", "value": name, "type": str, "NoneValue": True}])
         validate_workflow(self, workflow)
         task_id = 1
@@ -470,7 +470,7 @@ class Workflow:
                 raise AttributeError("Workflow doesn't have a key")
 
         def start_workflow(data):
-            from .task import Task
+            from task import Task
 
             workflow = Workflow(name=data["name"])
             del data["name"]
@@ -532,7 +532,7 @@ class Workflow:
         self.__runtime_connect()
         self.pyophidia_client.wsubmit(str_workflow, *args)
         self.exec_mode = "sync"
-        self.worfklow_id = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
+        self.workflow_id = self.pyophidia_client.last_jobid.split('?')[1].split('#')[0]
 
     def check(self, filename="sample.dot", visual=True):
         """
@@ -759,7 +759,7 @@ class Workflow:
             else:
                 dot.render("sample", view=True)
 
-        self.__param_check(params=[                                   {"name": "frequency", "value": frequency, "type": int},
+        self.__param_check(params=[{"name": "frequency", "value": frequency, "type": int},
                                    {"name": "iterative", "value": iterative, "type": bool},
                                    {"name": "visual_mode", "value": visual_mode, "type": bool}])
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
