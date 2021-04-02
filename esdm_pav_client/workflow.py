@@ -254,7 +254,10 @@ class Workflow:
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
-        from task import Task
+        try:
+            from task import Task
+        except ImportError:
+            from .task import Task
 
         self.__param_check([{"name": "operator", "value": operator, "type": str},
                             {"name": "arguments", "value": arguments, "type": dict},
@@ -311,8 +314,10 @@ class Workflow:
         task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2,
                                          params={}, dependencies=[])
         """
-
-        from task import Task
+        try:
+            from task import Task
+        except ImportError:
+            from .task import Task
 
         def validate_workflow(w1, w2):
             if not isinstance(w2, Workflow) or w1.name == w2.name:
@@ -470,7 +475,10 @@ class Workflow:
                 raise AttributeError("Workflow doesn't have a key")
 
         def start_workflow(data):
-            from task import Task
+            try:
+                from task import Task
+            except ImportError:
+                from .task import Task
 
             workflow = Workflow(name=data["name"])
             del data["name"]
@@ -731,10 +739,12 @@ class Workflow:
             hexagonal_commands = ["oph_for", "oph_endfor"]
             dot = graphviz.Digraph(comment=self.name)
             for task in self.tasks:
-                dot.attr('node', shape="circle", width="2.3", penwidth="3", style="")
+                dot.attr('node', shape="circle", width="1", penwidth="1", style="")
+                if len(task_dict.keys()) == 0 and task == self.tasks[0]:
+                    dot.attr("node", fillcolor="red", style="filled")
                 if task.name in task_dict and oph_color_dictionary:
                     dot.attr("node", fillcolor=oph_color_dictionary[task_dict[task.name]], style="filled")
-                dot.attr("edge", penwidth="3")
+                dot.attr("edge", penwidth="1")
                 if task.operator in diamond_commands:
                     dot.attr('node', shape="diamond")
                 elif task.operator in hexagonal_commands:
@@ -753,7 +763,7 @@ class Workflow:
             notebook_check = self._notebook_check()
             if notebook_check is True:
                 # TODO change the image dimensions
-                from IPython.display import display,clear_output
+                from IPython.display import display, clear_output
                 clear_output(wait=True)
                 display(dot)
             else:
@@ -764,12 +774,14 @@ class Workflow:
                                    {"name": "visual_mode", "value": visual_mode, "type": bool}])
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
                                 "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
-                                "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow"}
+                                "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow",
+                                "OPH_STATUS_EXECUTE_ERROR": "red"}
         _check_workflow_validity()
         self.__runtime_connect()
         self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         workflow_status = _check_workflow_status(json_response)
+
         if iterative is True:
             while True:
                 if visual_mode is True:
