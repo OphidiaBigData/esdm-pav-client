@@ -36,7 +36,8 @@ setup(
     ],
     install_requires=[
         'pyophidia',
-        'click'
+        'click',
+        'graphviz==0.14'
     ],
     entry_points  = {
         'console_scripts': [
