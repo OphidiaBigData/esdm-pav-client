@@ -632,7 +632,8 @@ class Workflow:
         else:
             dot.render(filename, view=True)
 
-    def cancel(self):
+    @classmethod
+    def cancel(self, workflow_id=None):
         """
         Cancel a workflow that has been submitted
 
@@ -650,7 +651,11 @@ class Workflow:
         w1.cancel()
         """
         self.__runtime_connect()
-        cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id))
+        if not workflow_id:
+            cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id))
+        else:
+            cancel = self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(workflow_id))
+
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
         """

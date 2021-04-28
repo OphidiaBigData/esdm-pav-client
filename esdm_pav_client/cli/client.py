@@ -1,9 +1,14 @@
 import click
 import sys
-# import os
-#
-# previous_dir = os.path.dirname(os.getcwd())
-# sys.path.insert(0, os.path.dirname(previous_dir))
+import os
+
+def verbose_check_display(verbose, text):
+    if verbose:
+        click.echo(text)
+
+
+previous_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, os.path.dirname(previous_dir))
 sys.path.insert(0, "..")
 from esdm_pav_client import Workflow
 
@@ -21,14 +26,14 @@ from esdm_pav_client import Workflow
     "-m", "--monitor", is_flag=True, help="Will display a graph of the workflow"
 )
 @click.option(
-    "-a", "--async_mode", is_flag=True, help="Will change the exec_mode to async"
+    "-s", "--sync_mode", is_flag=True, help="Will change the exec_mode to sync"
 )
 @click.option(
-    "-c", "--cancel", is_flag=True, help="Will cancel the workflow. It only works in the async_mode"
+    "-c", "--cancel", help="Will cancel the workflow. It only works in the async_mode", type=int
 )
 @click.argument("workflow")
 @click.argument("workflow_args", nargs=-1, type=click.UNPROCESSED)
-def run(verbose, server, port, monitor, async_mode, cancel, workflow, workflow_args):
+def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args):
     """Command Line Interface to run an ESDM PAV experiment WORKFLOW\n
        Example: client.py experiment.json 1 2"""
 
@@ -53,21 +58,26 @@ def run(verbose, server, port, monitor, async_mode, cancel, workflow, workflow_a
     workflow, server, port = modify_args(workflow, server, port)
     args = extract_other_args(workflow_args)
 
-    if verbose:
-        click.echo("Reading the workflow")
+    verbose_check_display(verbose, "Reading the workflow")
     w1 = Workflow.load(workflow)
 
-    if verbose:
-        click.echo("Submitting the workflow")
-    if async_mode:
-        w1.exec_mode = "async"
-    w1.submit(server=server, port=port, *args)
-    if async_mode:
-        click.echo("Workflow ID: {0}".format(str(w1.workflow_id)))
+    if not sync_mode:
         if cancel:
-            w1.cancel()
-    if monitor:
-        w1.monitor()
+            verbose_check_display(verbose, "Will cancel workflow: {0}".format(str(cancel)))
+            w1.cancel(workflow_id=str(cancel))
+            return
+        verbose_check_display(verbose, "Submitting the workflow in async mode")
+        w1.submit(server=server, port=port, *args)
+        if monitor:
+            w1.monitor()
+    else:
+        w1.exec_mode = "sync"
+        verbose_check_display(verbose, "Submitting the workflow in sync mode")
+        w1.submit(server=server, port=port, *args)
+        w1.monitor(visual_mode=False, frequency=20)
+
+
+
 
 
 if __name__ == "__main__":
