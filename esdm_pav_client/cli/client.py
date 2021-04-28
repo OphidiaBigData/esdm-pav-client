@@ -1,15 +1,15 @@
 import click
 import sys
 import os
+# previous_dir = os.path.dirname(os.getcwd())
+# sys.path.insert(0, os.path.dirname(previous_dir))
+# sys.path.insert(0, "..")
 
 def verbose_check_display(verbose, text):
     if verbose:
         click.echo(text)
 
 
-previous_dir = os.path.dirname(os.getcwd())
-sys.path.insert(0, os.path.dirname(previous_dir))
-sys.path.insert(0, "..")
 from esdm_pav_client import Workflow
 
 
