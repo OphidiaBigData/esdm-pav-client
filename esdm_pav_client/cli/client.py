@@ -1,9 +1,9 @@
 import click
 import sys
 import os
-# previous_dir = os.path.dirname(os.getcwd())
-# sys.path.insert(0, os.path.dirname(previous_dir))
-# sys.path.insert(0, "..")
+previous_dir = os.path.dirname(os.getcwd())
+sys.path.insert(0, os.path.dirname(previous_dir))
+sys.path.insert(0, "..")
 
 def verbose_check_display(verbose, text):
     if verbose:
@@ -64,7 +64,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
     if not sync_mode:
         if cancel:
             verbose_check_display(verbose, "Will cancel workflow: {0}".format(str(cancel)))
-            w1.cancel(workflow_id=str(cancel))
+            Workflow.cancel_byID(workflow_id=str(cancel))
             return
         verbose_check_display(verbose, "Submitting the workflow in async mode")
         w1.submit(server=server, port=port, *args)
