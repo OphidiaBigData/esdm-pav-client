@@ -15,6 +15,7 @@ Dependencies
 
 -   [PyOphidia](https://github.com/OphidiaBigData/PyOphidia): the Ophidia Python bindings
 -   [click](https://click.palletsprojects.com): a Python package for creating beautiful command line interfaces in a composable way
+-   [graphviz](https://graphviz.readthedocs.io/en/stable/): Python interface to facilitates the creation and rendering of graph descriptions in the DOT language of Graphviz
 
 Installation from sources
 -------------------------
@@ -23,7 +24,7 @@ To install the package run the following commands:
 
 ``` {.sourceCode .bash}
 git clone https://github.com/OphidiaBigData/esdm-pav-client
-cd PyOphidia
+cd esdm-pav-client
 python setup.py install
 ```
 
