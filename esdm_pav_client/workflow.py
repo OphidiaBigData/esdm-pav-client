@@ -802,15 +802,3 @@ class Workflow:
             else:
                 print(workflow_status)
                 return workflow_status
-
-    @staticmethod
-    def cancel_byID(workflow_id):
-        def __runtime_connect(username="oph-test", password="abcd", server="127.0.0.1", port="11732"):
-            from PyOphidia import client
-            pyophidia_client = client.Client(
-                username=username, password=password, server=server, port=port
-            )
-            return pyophidia_client
-
-        pyophidia_client = __runtime_connect()
-        cancel = pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(workflow_id))
