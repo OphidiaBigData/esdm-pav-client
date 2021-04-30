@@ -10,16 +10,11 @@ w1 = Workflow(
     author="Author_name",
     abstract="Example workflow for testing",
 )
-t1 = w1.newTask(
-    operator="oph_createcontainer",
-    arguments={
-        "container": "work",
-        "dim": "lat|lon|time",
-        "dim_type": "double|double|double",
-        "hierarchy": "oph_base|oph_base|oph_time",
-    },
-    dependencies={},
-)
+t2 = w1.newTask(name="mytask1", operator='oph_script',
+                arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={})
+t3 = w1.newTask(name="mytask2", operator='oph_script',
+                arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={t2: None})
+w1.submit()
 
 w2 = Workflow(
     name="Sample_Workflow_template",
@@ -33,10 +28,8 @@ t3 = Task(
     arguments={},
 )
 
-
 def test_deinit():
     w1.deinit()
-
 
 @pytest.mark.parametrize(("task"), [(t3), ("t3"), ([t3])])
 def test_addTask(task):
@@ -141,7 +134,6 @@ def test_load(file):
 def test_addDependency(task, argument):
     t3.addDependency(task=task, argument=argument)
 
-
 @pytest.mark.parametrize(
     ("server", "port"),
     [
@@ -154,3 +146,42 @@ def test_addDependency(task, argument):
 )
 def test_submit(server, port):
     w1.submit(server=server, port=port)
+
+# First three should pass
+@pytest.mark.parametrize(
+    ("filename", "visual"),
+    [
+        ("sample.dot", True),
+        ("sample.sample", False),
+        (".pdf", True),
+        (15, False),
+        (15, "False"),
+        ("sample.pdf", "True")
+    ]
+)
+def test_check(filename, visual):
+    w1.check(filename=filename, visual=visual)
+
+
+def test_cancel():
+    w1.cancel()
+
+# First five should pass
+@pytest.mark.parametrize(
+    ("frequency", "iterative", "visual_mode"),
+    [
+        (10, True, False),
+        (10, True, True),
+        (10, False, True),
+        (10, False, False),
+        (100, True, False),
+        (10, True, False),
+        ("10", True, False),
+        (10, "True", False),
+        (10, True, "False"),
+        (None, True, False),
+
+    ]
+)
+def test_monitor(frequency, iterative, visual_mode):
+    w1.monitor(frequency=frequency, iterative=iterative, visual_mode=visual_mode)
