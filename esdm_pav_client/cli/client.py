@@ -82,14 +82,14 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             verbose_check_display(True, "Submitted. Workflow id= {0}".format((str(w1.workflow_id))))
             w1.monitor(visual_mode=False, frequency=20)
 
-    if cancel:
+    elif cancel:
         if not sync_mode:
             verbose_check_display(verbose, "Will cancel workflow: {0}".format(str(cancel)))
             w1 = Workflow(name="sample_workflow")
             w1.workflow_id = cancel
             w1.cancel()
             return
-    if not verbose and not monitor and not sync_mode and not cancel and not workflow:
+    else:
         print_help()
 
 
