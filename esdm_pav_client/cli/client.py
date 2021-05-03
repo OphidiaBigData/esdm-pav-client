@@ -11,6 +11,10 @@ def verbose_check_display(verbose, text):
     if verbose:
         click.echo(text)
 
+def print_help():
+    ctx = click.get_current_context()
+    click.echo(ctx.get_help())
+    ctx.exit()
 
 from esdm_pav_client import Workflow
 
@@ -35,7 +39,7 @@ from esdm_pav_client import Workflow
 )
 # @click.argument("workflow", type=click.UNPROCESSED)
 @click.option(
-    "-w", "--workflow", help="Will cancel the workflow. It only works in the async_mode", type=str
+    "-w", "--workflow", help="Will run the specified workflow.", type=str
 )
 @click.argument("workflow_args", nargs=-1, type=click.UNPROCESSED)
 def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args):
@@ -69,13 +73,13 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             w1.exec_mode = "sync"
             verbose_check_display(verbose, "Submitting the workflow in sync mode")
             w1.submit(server=server, port=port, *args)
-            verbose_check_display(True, "Submitted. Worfklow id= {0}".format((str(w1.workflow_id))))
+            verbose_check_display(True, "Submitted. Workflow id= {0}".format((str(w1.workflow_id))))
             if monitor:
                 w1.monitor()
         else:
             verbose_check_display(verbose, "Submitting the workflow in async mode")
             w1.submit(server=server, port=port, *args)
-            verbose_check_display(True, "Submitted. Worfklow id= {0}".format((str(w1.workflow_id))))
+            verbose_check_display(True, "Submitted. Workflow id= {0}".format((str(w1.workflow_id))))
             w1.monitor(visual_mode=False, frequency=20)
 
     if cancel:
@@ -85,6 +89,8 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             w1.workflow_id = cancel
             w1.cancel()
             return
+    if not verbose and not monitor and not sync_mode and not cancel and not workflow:
+        print_help()
 
 
 if __name__ == "__main__":

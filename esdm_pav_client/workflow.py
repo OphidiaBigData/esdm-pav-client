@@ -544,7 +544,7 @@ class Workflow:
 
     def check(self, filename="sample.dot", visual=True):
         """
-         Perform a workflow validity check and display an graph of the workflow
+         Perform a workflow validity check and display a graph of the workflow
 
          Parameters
          ----------
@@ -689,6 +689,12 @@ class Workflow:
         import graphviz
         import json
         import time
+        import re
+
+        def find_matches(d, item):
+            for k in d:
+                if re.match(k, item):
+                    return d[k]
 
         def _check_workflow_validity():
             import json
@@ -744,7 +750,7 @@ class Workflow:
                 if len(task_dict.keys()) == 0 and task == self.tasks[0]:
                     dot.attr("node", fillcolor="red", style="filled")
                 if task.name in task_dict and oph_color_dictionary:
-                    dot.attr("node", fillcolor=oph_color_dictionary[task_dict[task.name]], style="filled")
+                    dot.attr("node", fillcolor=find_matches(oph_color_dictionary,task_dict[task.name]), style="filled")
                 dot.attr("edge", penwidth="1")
                 if task.operator in diamond_commands:
                     dot.attr('node', shape="diamond")
@@ -774,9 +780,8 @@ class Workflow:
                                    {"name": "iterative", "value": iterative, "type": bool},
                                    {"name": "visual_mode", "value": visual_mode, "type": bool}])
         oph_color_dictionary = {"OPH_STATUS_RUNNING": "orange", "OPH_STATUS_UNSCHEDULED": "grey", "OPH_STATUS_PENDING": "pink",
-                                "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "green",
-                                "OPH_STATUS_*_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow",
-                                "OPH_STATUS_EXECUTE_ERROR": "red"}
+                                "OPH_STATUS_WAITING": "cyan", "OPH_STATUS_COMPLETED": "palegreen1",
+                                "OPH_STATUS_(.*?)_ERROR": "red", "OPH_STATUS_SKIPPED": "yellow"}
         _check_workflow_validity()
         self.__runtime_connect()
         self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
