@@ -1,5 +1,3 @@
-
-
 class Task:
     """
     Creates a Task object that can be embedded in a ESDM PAV experiment

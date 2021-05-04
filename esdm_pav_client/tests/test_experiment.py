@@ -1,5 +1,3 @@
-
-
 from esdm_pav_client import Task, Workflow
 import pytest
 
@@ -10,10 +8,18 @@ w1 = Workflow(
     author="Author_name",
     abstract="Example workflow for testing",
 )
-t2 = w1.newTask(name="mytask1", operator='oph_script',
-                arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={})
-t3 = w1.newTask(name="mytask2", operator='oph_script',
-                arguments={'script': '/gfs-data/home/evachlas/sleep.sh'}, dependencies={t2: None})
+t2 = w1.newTask(
+    name="mytask1",
+    operator="oph_script",
+    arguments={"script": "/gfs-data/home/evachlas/sleep.sh"},
+    dependencies={},
+)
+t3 = w1.newTask(
+    name="mytask2",
+    operator="oph_script",
+    arguments={"script": "/gfs-data/home/evachlas/sleep.sh"},
+    dependencies={t2: None},
+)
 w1.submit()
 
 w2 = Workflow(
@@ -28,8 +34,10 @@ t3 = Task(
     arguments={},
 )
 
+
 def test_deinit():
     w1.deinit()
+
 
 @pytest.mark.parametrize(("task"), [(t3), ("t3"), ([t3])])
 def test_addTask(task):
@@ -134,6 +142,7 @@ def test_load(file):
 def test_addDependency(task, argument):
     t3.addDependency(task=task, argument=argument)
 
+
 @pytest.mark.parametrize(
     ("server", "port"),
     [
@@ -147,6 +156,7 @@ def test_addDependency(task, argument):
 def test_submit(server, port):
     w1.submit(server=server, port=port)
 
+
 # First three should pass
 @pytest.mark.parametrize(
     ("filename", "visual"),
@@ -156,8 +166,8 @@ def test_submit(server, port):
         (".pdf", True),
         (15, False),
         (15, "False"),
-        ("sample.pdf", "True")
-    ]
+        ("sample.pdf", "True"),
+    ],
 )
 def test_check(filename, visual):
     w1.check(filename=filename, visual=visual)
@@ -165,6 +175,7 @@ def test_check(filename, visual):
 
 def test_cancel():
     w1.cancel()
+
 
 # First five should pass
 @pytest.mark.parametrize(
@@ -180,8 +191,9 @@ def test_cancel():
         (10, "True", False),
         (10, True, "False"),
         (None, True, False),
-
-    ]
+    ],
 )
 def test_monitor(frequency, iterative, visual_mode):
-    w1.monitor(frequency=frequency, iterative=iterative, visual_mode=visual_mode)
+    w1.monitor(
+        frequency=frequency, iterative=iterative, visual_mode=visual_mode
+    )
