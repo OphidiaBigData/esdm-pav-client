@@ -90,6 +90,14 @@ Monitor the running experiment on the ESDM PAV runtime. The visual mode argument
 w1.monitor(visual_mode=True)
 ```
 
+#### Cancel a ESDM PAV experiment
+
+Cancel the experiment on the ESDM PAV runtime.
+
+``` {.sourceCode .python}
+w1.cancel()
+```
+
 #### Load a ESDM PAV experiment document
 
 Load a PAV experiment from the JSON document
@@ -120,6 +128,12 @@ To monitor the execution of a running PAV experiment document on the ESDM PAV ru
 
 ``` {.sourceCode .bash}
 $prefix/esdm-pav-client -w example.json 2 -m
+```
+
+To cancel a running PAV experiment document on the ESDM PAV runtime:
+
+``` {.sourceCode .bash}
+$prefix/esdm-pav-client -c <workflow_id>
 ```
 
 Acknowledgement
