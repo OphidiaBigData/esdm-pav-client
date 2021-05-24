@@ -12,7 +12,6 @@ class Workflow:
                     abstract="sample abstract", on_error=None, run=None,
                     ncores=1, nthreads=None)
 
-
     Parameters
     ----------
     name: str
@@ -169,8 +168,8 @@ class Workflow:
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV workflow the esdm_pav_client.task.Task
-        object with the given task name
+        Retrieve from the ESDM PAV experiment workflow the
+        esdm_pav_client.task.Task object with the given task name
 
         Parameters
         ----------
@@ -577,7 +576,8 @@ class Workflow:
 
     def check(self, filename="sample.dot", visual=True):
         """
-        Perform a workflow validity check and display a graph of the workflow
+        Perform a ESDM PAV experiment workflow validity check and display the
+        graph of the workflow
 
         Parameters
         ----------
@@ -601,15 +601,15 @@ class Workflow:
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
             subgraphs_list = [
-                {"start_index": start_index, "operator": "oph_if"}
+                {"start_index": start_index, "operator": "if"}
                 for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "oph_if"
+                    i for i, t in enumerate(list_of_operators) if t == "if"
                 ]
             ]
             subgraphs_list += [
-                {"start_index": start_index, "operator": "oph_for"}
+                {"start_index": start_index, "operator": "for"}
                 for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "oph_for"
+                    i for i, t in enumerate(list_of_operators) if t == "for"
                 ]
             ]
             subgraphs_list = sorted(
@@ -619,7 +619,7 @@ class Workflow:
                 [
                     i
                     for i, t in enumerate(list_of_operators)
-                    if t == "oph_endfor" or t == "oph_endif"
+                    if t == "endfor" or t == "endif"
                 ]
             )[::-1]
             for i in range(0, len(subgraphs_list)):
@@ -662,8 +662,8 @@ class Workflow:
         )
         if visual is False:
             return workflow_validity
-        diamond_commands = ["oph_if", "oph_endif", "oph_else"]
-        hexagonal_commands = ["oph_for", "oph_endfor"]
+        diamond_commands = ["if", "endif", "else"]
+        hexagonal_commands = ["for", "endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
             dot.attr("node", shape="circle", width="2.3", penwidth="3")
@@ -694,7 +694,7 @@ class Workflow:
 
     def cancel(self):
         """
-        Cancel a workflow that has been submitted
+        Cancel the ESDM PAV experiment workflow that has been submitted
 
         Returns
         -------
@@ -716,16 +716,18 @@ class Workflow:
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
         """
-        Monitors the progress of a workflow
+        Monitors the progress of the ESDM PAV experiment workflow execution
 
         Parameters
         ----------
         frequency : int
             The frequency in seconds to receive the updates
         iterative: bool
-            True for receiving updates periodically, based on the frequency, or False to receive updates only once
+            True for receiving updates periodically, based on the frequency, or
+            False to receive updates only once
         visual_mode: bool
-            True for receiving the workflow as an image or False to receive updates only in text
+            True for receiving the workflow status as an image or False to
+            receive updates only in text
 
         Returns
         -------
@@ -770,15 +772,15 @@ class Workflow:
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
             subgraphs_list = [
-                {"start_index": start_index, "operator": "oph_if"}
+                {"start_index": start_index, "operator": "if"}
                 for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "oph_if"
+                    i for i, t in enumerate(list_of_operators) if t == "if"
                 ]
             ]
             subgraphs_list += [
-                {"start_index": start_index, "operator": "oph_for"}
+                {"start_index": start_index, "operator": "for"}
                 for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "oph_for"
+                    i for i, t in enumerate(list_of_operators) if t == "for"
                 ]
             ]
             subgraphs_list = sorted(
@@ -788,7 +790,7 @@ class Workflow:
                 [
                     i
                     for i, t in enumerate(list_of_operators)
-                    if t == "oph_endfor" or t == "oph_endif"
+                    if t == "endfor" or t == "endif"
                 ]
             )[::-1]
             for i in range(0, len(subgraphs_list)):
@@ -831,10 +833,10 @@ class Workflow:
                         ]
             return task_dict
 
-        def _draw(json_response, oph_color_dictionary=None):
+        def _draw(json_response, status_color_dictionary=None):
             task_dict = _extract_info(json_response)
-            diamond_commands = ["oph_if", "oph_endif", "oph_else"]
-            hexagonal_commands = ["oph_for", "oph_endfor"]
+            diamond_commands = ["if", "endif", "else"]
+            hexagonal_commands = ["for", "endfor"]
             dot = graphviz.Digraph(comment=self.name)
             for task in self.tasks:
                 dot.attr(
@@ -842,11 +844,11 @@ class Workflow:
                 )
                 if len(task_dict.keys()) == 0 and task == self.tasks[0]:
                     dot.attr("node", fillcolor="red", style="filled")
-                if task.name in task_dict and oph_color_dictionary:
+                if task.name in task_dict and status_color_dictionary:
                     dot.attr(
                         "node",
                         fillcolor=_find_matches(
-                            oph_color_dictionary, task_dict[task.name]
+                            status_color_dictionary, task_dict[task.name]
                         ),
                         style="filled",
                     )
@@ -883,14 +885,17 @@ class Workflow:
                 {"name": "visual_mode", "value": visual_mode, "type": bool},
             ]
         )
-        oph_color_dictionary = {
-            "OPH_STATUS_RUNNING": "orange",
-            "OPH_STATUS_UNSCHEDULED": "grey",
-            "OPH_STATUS_PENDING": "pink",
-            "OPH_STATUS_WAITING": "cyan",
-            "OPH_STATUS_COMPLETED": "palegreen1",
-            "OPH_STATUS_(.*?)_ERROR": "red",
-            "OPH_STATUS_SKIPPED": "yellow",
+        status_color_dictionary = {
+            "RUNNING": "orange",
+            "UNSELECTED": "grey",
+            "UNKNOWN": "grey",
+            "PENDING": "pink",
+            "WAITING": "cyan",
+            "COMPLETED": "palegreen1",
+            "ERROR": "red",
+            "(.*?)_ERROR": "red",
+            "ABORTED": "red",
+            "SKIPPED": "yellow",
         }
         _check_workflow_validity()
         self.__runtime_connect()
@@ -903,12 +908,12 @@ class Workflow:
         if iterative is True:
             while True:
                 if visual_mode is True:
-                    _draw(json_response, oph_color_dictionary)
+                    _draw(json_response, status_color_dictionary)
                 else:
                     print(workflow_status)
                 if (
-                    workflow_status != "OPH_STATUS_RUNNING"
-                    and workflow_status != "OPH_STATUS_PENDING"
+                    workflow_status != "RUNNING"
+                    and workflow_status != "PENDING"
                 ):
                     return workflow_status
                 time.sleep(frequency)
@@ -919,7 +924,7 @@ class Workflow:
                 workflow_status = _check_workflow_status(json_response)
         else:
             if visual_mode is True:
-                _draw(json_response, oph_color_dictionary)
+                _draw(json_response, status_color_dictionary)
                 return workflow_status
             else:
                 print(workflow_status)

@@ -19,11 +19,7 @@ def print_help():
     ctx.exit()
 
 
-@click.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-    )
-)
+@click.command(context_settings=dict(ignore_unknown_options=True,))
 @click.option(
     "-v", "--verbose", is_flag=True, help="Will print verbose messages."
 )
@@ -32,27 +28,36 @@ def print_help():
 )
 @click.option("-P", "--port", help="ESDM PAV Runtime port", default="11732")
 @click.option(
-    "-m", "--monitor", is_flag=True, help="Will display a graph of the workflow"
+    "-m",
+    "--monitor",
+    is_flag=True,
+    help="Display a graph of the experiment workflow execution status",
 )
 @click.option(
-    "-s", "--sync_mode", is_flag=True, help="Will change the exec_mode to sync"
+    "-s",
+    "--sync_mode",
+    is_flag=True,
+    help="Change the execution mode to synchronous",
 )
 @click.option(
     "-c",
     "--cancel",
-    help="Will cancel the workflow. It only works in the async_mode",
+    help="Cancel the experiment execution. It only works in asynchronous mode",
     type=int,
 )
 # @click.argument("workflow", type=click.UNPROCESSED)
 @click.option(
-    "-w", "--workflow", help="Will run the specified workflow.", type=str
+    "-w",
+    "--workflow",
+    help="Will run the specified experiment workflow.",
+    type=str,
 )
 @click.argument("workflow_args", nargs=-1, type=click.UNPROCESSED)
 def run(
     verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args
 ):
-    """Command Line Interface to run an ESDM PAV experiment WORKFLOW\n
-    Example: client.py experiment.json 1 2"""
+    """Command Line Interface to run an ESDM PAV experiment workflow\n
+    Example: client.py -w experiment.json 1 2"""
 
     def modify_args(workflow, server, port):
         if workflow.startswith("="):
@@ -75,35 +80,40 @@ def run(
     if workflow:
         workflow, server, port = modify_args(workflow, server, port)
         args = extract_other_args(workflow_args)
-        verbose_check_display(verbose, "Reading the workflow")
+        verbose_check_display(verbose, "Reading the experiment workflow")
         w1 = Workflow.load(workflow)
         if not sync_mode:
             w1.exec_mode = "sync"
             verbose_check_display(
-                verbose, "Submitting the workflow in sync mode"
+                verbose,
+                "Submitting the experiment workflow in synchronous mode",
             )
             w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
-                "Submitted. Workflow id= {0}".format((str(w1.workflow_id))),
+                "Submitted! Experiment id= {0}".format((str(w1.workflow_id))),
             )
             if monitor:
                 w1.monitor()
         else:
             verbose_check_display(
-                verbose, "Submitting the workflow in async mode"
+                verbose,
+                "Submitting the experiment workflow in asynchronous mode",
             )
             w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
-                "Submitted. Workflow id= {0}".format((str(w1.workflow_id))),
+                "Submitted! Experiment id= {0}".format((str(w1.workflow_id))),
             )
             w1.monitor(visual_mode=False, frequency=20)
 
     elif cancel:
         if not sync_mode:
             verbose_check_display(
-                verbose, "Will cancel workflow: {0}".format(str(cancel))
+                verbose,
+                "Will cancel the experiment workflow execution: {0}".format(
+                    str(cancel)
+                ),
             )
             w1 = Workflow(name="sample_workflow")
             w1.workflow_id = cancel
