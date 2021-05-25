@@ -598,6 +598,9 @@ class Workflow:
         """
         import graphviz
 
+        def _trim_text(text):
+            return text[:7] + "..." if len(text) > 10 else text
+
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
             subgraphs_list = [
@@ -635,7 +638,12 @@ class Workflow:
                 ):
                     new_dot.attr("node")
                     new_dot.node(
-                        tasks[i].name, tasks[i].name + "\n" + tasks[i].operator
+                        tasks[i].name,
+                        _trim_text(tasks[i].name)
+                        + "\n"
+                        + _trim_text(tasks[i].type)
+                        + "\n"
+                        + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -666,13 +674,22 @@ class Workflow:
         hexagonal_commands = ["for", "endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
-            dot.attr("node", shape="circle", width="2.3", penwidth="3")
-            dot.attr("edge", penwidth="3")
+            dot.attr(
+                "node", shape="circle", width="1", penwidth="1", fontsize="10pt"
+            )
+            dot.attr("edge", penwidth="1")
             if task.operator in diamond_commands:
                 dot.attr("node", shape="diamond")
             elif task.operator in hexagonal_commands:
                 dot.attr("node", shape="hexagon")
-            dot.node(task.name, task.name + "\n" + task.operator)
+            dot.node(
+                task.name,
+                _trim_text(task.name)
+                + "\n"
+                + _trim_text(task.type)
+                + "\n"
+                + _trim_text(task.operator),
+            )
             dot.attr("edge", style="solid")
             for d in task.dependencies:
                 if "argument" not in d.keys():
@@ -754,6 +771,9 @@ class Workflow:
         import time
         import re
 
+        def _trim_text(text):
+            return text[:7] + "..." if len(text) > 10 else text
+
         def _find_matches(d, item):
             for k in d:
                 if re.match(k, item):
@@ -806,7 +826,12 @@ class Workflow:
                 ):
                     new_dot.attr("node")
                     new_dot.node(
-                        tasks[i].name, tasks[i].name + "\n" + tasks[i].operator
+                        tasks[i].name,
+                        _trim_text(tasks[i].name)
+                        + "\n"
+                        + _trim_text(tasks[i].type)
+                        + "\n"
+                        + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -840,7 +865,12 @@ class Workflow:
             dot = graphviz.Digraph(comment=self.name)
             for task in self.tasks:
                 dot.attr(
-                    "node", shape="circle", width="1", penwidth="1", style=""
+                    "node",
+                    shape="circle",
+                    width="1",
+                    penwidth="1",
+                    style="",
+                    fontsize="10pt",
                 )
                 if len(task_dict.keys()) == 0 and task == self.tasks[0]:
                     dot.attr("node", fillcolor="red", style="filled")
@@ -857,7 +887,14 @@ class Workflow:
                     dot.attr("node", shape="diamond")
                 elif task.operator in hexagonal_commands:
                     dot.attr("node", shape="hexagon")
-                dot.node(task.name, task.name + "\n" + task.operator)
+                dot.node(
+                    task.name,
+                    _trim_text(task.name)
+                    + "\n"
+                    + _trim_text(task.type)
+                    + "\n"
+                    + _trim_text(task.operator),
+                )
                 dot.attr("edge", style="solid")
                 for d in task.dependencies:
                     if "argument" not in d.keys():
