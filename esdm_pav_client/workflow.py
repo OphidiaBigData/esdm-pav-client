@@ -810,7 +810,7 @@ class Workflow:
                 [
                     i
                     for i, t in enumerate(list_of_operators)
-                    if t == "endfor" or t == "endif"
+                    if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
                 ]
             )[::-1]
             for i in range(0, len(subgraphs_list)):
@@ -858,6 +858,12 @@ class Workflow:
                         ]
             return task_dict
 
+        def _match_shapes(operator, commands):
+            for command in commands:
+                if re.match("(?i).*"+command, operator):
+                    return True
+            return False
+
         def _draw(json_response, status_color_dictionary=None):
             task_dict = _extract_info(json_response)
             diamond_commands = ["if", "endif", "else"]
@@ -883,9 +889,9 @@ class Workflow:
                         style="filled",
                     )
                 dot.attr("edge", penwidth="1")
-                if task.operator in diamond_commands:
+                if _match_shapes(task.operator, diamond_commands):
                     dot.attr("node", shape="diamond")
-                elif task.operator in hexagonal_commands:
+                elif _match_shapes(task.operator, hexagonal_commands):
                     dot.attr("node", shape="hexagon")
                 dot.node(
                     task.name,
@@ -923,16 +929,16 @@ class Workflow:
             ]
         )
         status_color_dictionary = {
-            "RUNNING": "orange",
-            "UNSELECTED": "grey",
-            "UNKNOWN": "grey",
-            "PENDING": "pink",
-            "WAITING": "cyan",
-            "COMPLETED": "palegreen1",
-            "ERROR": "red",
+            "(?i).*RUNNING": "orange",
+            "(?i).*UNSELECTED": "grey",
+            "(?i).*UNKNOWN": "grey",
+            "(?i).*PENDING": "pink",
+            "(?i).*WAITING": "cyan",
+            "(?i).*COMPLETED": "palegreen1",
+            "(?i).*ERROR": "red",
             "(.*?)_ERROR": "red",
-            "ABORTED": "red",
-            "SKIPPED": "yellow",
+            "(?i).*ABORTED": "red",
+            "(?i).*SKIPPED": "yellow",
         }
         _check_workflow_validity()
         self.__runtime_connect()
@@ -948,9 +954,10 @@ class Workflow:
                     _draw(json_response, status_color_dictionary)
                 else:
                     print(workflow_status)
-                if (
-                    workflow_status != "RUNNING"
-                    and workflow_status != "PENDING"
+                if (not re.match("(?i).*RUNNING", workflow_status)
+                    and
+                    (not re.match("(?i).*PENDING", workflow_status))
+
                 ):
                     return workflow_status
                 time.sleep(frequency)
