@@ -57,7 +57,7 @@ def run(
     verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args
 ):
     """Command Line Interface to run an ESDM PAV experiment workflow\n
-    Example: client.py -w experiment.json 1 2"""
+    Example: esdm-pav-client -w experiment.json 1 2"""
 
     def modify_args(workflow, server, port):
         if workflow.startswith("="):
@@ -91,7 +91,7 @@ def run(
             w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
-                "Submitted! Experiment id= {0}".format((str(w1.workflow_id))),
+                "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
             if monitor:
                 w1.monitor()
@@ -103,9 +103,9 @@ def run(
             w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
-                "Submitted! Experiment id= {0}".format((str(w1.workflow_id))),
+                "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
-            w1.monitor(visual_mode=False, frequency=20)
+            w1.monitor(visual_mode=False, frequency=10)
 
     elif cancel:
         if not sync_mode:

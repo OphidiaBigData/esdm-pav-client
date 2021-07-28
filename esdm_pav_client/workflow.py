@@ -89,10 +89,16 @@ class Workflow:
         )
         if self.pyophidia_client is None:
             self.pyophidia_client = client.Client(
-                username=username, password=password, server=server, port=port
+                username=username,
+                password=password,
+                server=server,
+                port=port,
+                api_mode=False,
             )
             if self.pyophidia_client.last_return_value != 0:
                 raise AttributeError("failed to connect to the runtime")
+            else:
+                self.pyophidia_client.resume_session()
 
     def __param_check(self, params=[]):
         for param in params:
