@@ -816,7 +816,7 @@ class Workflow:
                 [
                     i
                     for i, t in enumerate(list_of_operators)
-                    if t == "endfor" or t == "endif"
+                    if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
                 ]
             )[::-1]
             for i in range(0, len(subgraphs_list)):
@@ -864,12 +864,51 @@ class Workflow:
                         ]
             return task_dict
 
-        def _draw(json_response, status_color_dictionary=None):
+        def _match_shapes(operator, commands):
+            for command in commands:
+                if re.match("(?i).*"+command, operator):
+                    return True
+            return False
+
+        def _sort_tasks(tasks):
+            sorted_tasks = []
+            for i in range (0, len(tasks)):
+                if re.findall(r".*?(\([0-9].*\))", tasks[i].name):
+                    clean_name = tasks[i].name.replace(
+                        re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], "")
+                    for task in tasks[i:]:
+                        if clean_name in task.name and task.name not in [t.name for t in sorted_tasks] and re.findall(r".*?(\([0-9].*\))", task.name):
+                            sorted_tasks.append(task)
+                else:
+                    sorted_tasks.append(tasks[i])
+            return sorted_tasks
+
+
+
+        def _modify_task(json_response):
+            from task import Task
+            new_tasks = []
+            for res in json_response["response"]:
+                if res["objkey"] == "resume":
+                    task_name_index = res["objcontent"][0]["rowkeys"].index("COMMAND")
+                    tasks = json.loads(res["objcontent"][0]["rowvalues"][0][task_name_index])
+            for task in tasks["tasks"]:
+                arguments = {}
+                for j in task["arguments"]:
+                    arguments[j.split("=")[0]] = j.split("=")[1]
+                task_obj = Task(name=task["name"], operator=task["operator"], arguments=arguments)
+                if "dependencies" in task.keys():
+                    for dependency in task["dependencies"]:
+                        task_obj.copyDependency(dependency)
+                new_tasks.append(task_obj)
+            return new_tasks
+
+        def _draw(tasks, json_response, status_color_dictionary=None, ):
             task_dict = _extract_info(json_response)
             diamond_commands = ["if", "endif", "else"]
             hexagonal_commands = ["for", "endfor"]
             dot = graphviz.Digraph(comment=self.name)
-            for task in self.tasks:
+            for task in tasks:
                 dot.attr(
                     "node",
                     shape="circle",
@@ -889,9 +928,9 @@ class Workflow:
                         style="filled",
                     )
                 dot.attr("edge", penwidth="1")
-                if task.operator in diamond_commands:
+                if _match_shapes(task.operator, diamond_commands):
                     dot.attr("node", shape="diamond")
-                elif task.operator in hexagonal_commands:
+                elif _match_shapes(task.operator, hexagonal_commands):
                     dot.attr("node", shape="hexagon")
                 dot.node(
                     task.name,
@@ -906,7 +945,7 @@ class Workflow:
                     if "argument" not in d.keys():
                         dot.attr("edge", style="dashed")
                     dot.edge(d["task"], task.name)
-            subgraphs = _find_subgraphs(self.tasks)
+            subgraphs = _find_subgraphs(tasks)
             for i in range(0, len(subgraphs) - 1):
                 subgraphs[i]["dot"].subgraph(subgraphs[i + 1]["dot"])
             if len(subgraphs) > 0:
@@ -929,45 +968,53 @@ class Workflow:
             ]
         )
         status_color_dictionary = {
-            "RUNNING": "orange",
-            "UNSELECTED": "grey",
-            "UNKNOWN": "grey",
-            "PENDING": "pink",
-            "WAITING": "cyan",
-            "COMPLETED": "palegreen1",
-            "ERROR": "red",
+            "(?i).*RUNNING": "orange",
+            "(?i).*UNSELECTED": "grey",
+            "(?i).*UNKNOWN": "grey",
+            "(?i).*PENDING": "pink",
+            "(?i).*WAITING": "cyan",
+            "(?i).*COMPLETED": "palegreen1",
+            "(?i).*ERROR": "red",
             "(.*?)_ERROR": "red",
-            "ABORTED": "red",
-            "SKIPPED": "yellow",
+            "(?i).*ABORTED": "red",
+            "(?i).*SKIPPED": "yellow",
         }
         _check_workflow_validity()
         self.__runtime_connect()
         self.pyophidia_client.submit(
             "oph_resume id={0};".format(self.workflow_id)
         )
+        status_response = json.loads(self.pyophidia_client.last_response)
+        self.pyophidia_client.submit(
+            "oph_resume document_type=request;level=3;id={0};".format(self.workflow_id)
+        )
         json_response = json.loads(self.pyophidia_client.last_response)
-        workflow_status = _check_workflow_status(json_response)
 
+        task_dict = {}
+        tasks = _modify_task(json_response)
+        sorted_tasks = _sort_tasks(tasks)
+        workflow_status = _check_workflow_status(status_response)
         if iterative is True:
             while True:
                 if visual_mode is True:
-                    _draw(json_response, status_color_dictionary)
+                    _draw(sorted_tasks, status_response, status_color_dictionary)
                 else:
                     print(workflow_status)
-                if (
-                    workflow_status != "RUNNING"
-                    and workflow_status != "PENDING"
+                if (not re.match("(?i).*RUNNING", workflow_status)
+                    and
+                    (not re.match("(?i).*PENDING", workflow_status))
+
                 ):
                     return workflow_status
                 time.sleep(frequency)
                 self.pyophidia_client.submit(
                     "oph_resume id={0};".format(self.workflow_id)
                 )
-                json_response = json.loads(self.pyophidia_client.last_response)
-                workflow_status = _check_workflow_status(json_response)
+                status_response = json.loads(self.pyophidia_client.last_response)
+                workflow_status = _check_workflow_status(status_response)
         else:
             if visual_mode is True:
-                _draw(json_response, status_color_dictionary)
+                _draw(sorted_tasks, json_response, status_color_dictionary)
                 return workflow_status
             else:
                 print(workflow_status)
