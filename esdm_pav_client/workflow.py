@@ -886,7 +886,11 @@ class Workflow:
 
 
         def _modify_task(json_response):
-            from task import Task
+            try:
+                from task import Task
+            except ImportError:
+                from .task import Task
+
             new_tasks = []
             for res in json_response["response"]:
                 if res["objkey"] == "resume":
