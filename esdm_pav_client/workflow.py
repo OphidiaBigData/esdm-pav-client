@@ -542,7 +542,7 @@ class Workflow:
         workflow = start_workflow(data)
         return workflow
 
-    def submit(self, *args):
+    def submit(self, *args, server="127.0.0.1", port="11732"):
         """
         Submit an entire ESDM PAV experiment workflow.
 
