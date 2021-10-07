@@ -1,14 +1,14 @@
 class Experiment:
     """
-    Creates or loads a ESDM PAV experiment workflow. It also contains methods
+    Creates or loads an ESDM PAV experiment. It also contains methods
     to manipulate the workflow.
 
-    A workflow is a sequence of tasks. Each task can be either independent or
-    dependent on other tasks, for instance it processes the output of other
+    An experiment is a sequence of tasks. Each task can be either independent
+    or dependent on other tasks, for instance it processes the output of other
     tasks.
 
     Construction::
-    w1 = Workflow(name="sample", author="sample author",
+    w1 = Experiment(name="sample", author="sample author",
                     abstract="sample abstract", on_error=None, run=None,
                     ncores=1, nthreads=None)
 
@@ -140,7 +140,7 @@ class Experiment:
 
     def addTask(self, task):
         """
-        Adds a task to the ESDM PAV experiment workflow
+        Adds a task to the ESDM PAV experiment
 
         Parameters
         ----------
@@ -174,7 +174,7 @@ class Experiment:
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV experiment workflow the
+        Retrieve from the ESDM PAV experiment the
         esdm_pav_client.task.Task object with the given task name
 
         Parameters
@@ -242,7 +242,7 @@ class Experiment:
         self, operator, arguments={}, dependencies={}, name=None, **kwargs
     ):
         """
-        Adds a new Task in the ESDM PAV experiment workflow without the need
+        Adds a new Task in the ESDM PAV experiment without the need
         of creating a esdm_pav_client.task.Task object
 
         Attributes
@@ -275,7 +275,7 @@ class Experiment:
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="sample author",
+        w1 = Experiment(name="Experiment 1", author="sample author",
                         abstract="sample abstract")
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
@@ -350,7 +350,7 @@ class Experiment:
             from .task import Task
 
         def validate_workflow(w1, w2):
-            if not isinstance(w2, Workflow) or w1.name == w2.name:
+            if not isinstance(w2, Experiment) or w1.name == w2.name:
                 raise AttributeError("Wrong workflow or same workflows")
 
         def dependency_check(dependency):
@@ -435,7 +435,7 @@ class Experiment:
 
         self.__param_check(
             [
-                {"name": "workflow", "value": workflow, "type": Workflow},
+                {"name": "workflow", "value": workflow, "type": Experiment},
                 {"name": "params", "value": params, "type": dict},
                 {"name": "dependencies", "value": dependencies, "type": list},
                 {"name": "name", "value": name, "type": str, "NoneValue": True},
@@ -467,7 +467,7 @@ class Experiment:
     @staticmethod
     def load(file):
         """
-        Load a ESDM PAV experiment workflow from the JSON document
+        Load a ESDM PAV experiment from the JSON document
 
         Parameters
         ----------
@@ -476,7 +476,7 @@ class Experiment:
 
         Returns
         -------
-        workflow : <class 'esdm_pav_client.workflow.Workflow'>
+        workflow : <class 'esdm_pav_client.experiment.Experiment'>
             Returns the workflow object as it was loaded from the file
 
         Raises
@@ -489,7 +489,7 @@ class Experiment:
 
         Example
         -------
-        w1 = Workflow.load("json_file.json")
+        w1 = Experiment.load("json_file.json")
         """
 
         def file_check(filename):
@@ -515,7 +515,7 @@ class Experiment:
             except ImportError:
                 from .task import Task
 
-            workflow = Workflow(name=data["name"])
+            workflow = Experiment(name=data["name"])
             del data["name"]
             attrs = {k: data[k] for k in data if k != "name" and k != "tasks"}
             workflow.__dict__.update(attrs)
@@ -546,8 +546,8 @@ class Experiment:
 
     def check(self, filename="sample.dot", visual=True):
         """
-        Perform a ESDM PAV experiment workflow validity check and display the
-        graph of the workflow
+        Perform a ESDM PAV experiment validity check and display the
+        graph of the experiment
 
         Parameters
         ----------
@@ -560,7 +560,7 @@ class Experiment:
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="sample author",
+        w1 = Experiment(name="Experiment 1", author="sample author",
                        abstract="sample abstract")
         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                          dependencies={})

@@ -17,7 +17,7 @@ class Workflow:
 
     def cancel(self):
         """
-        Cancel the ESDM PAV experiment workflow that has been submitted
+        Cancel the ESDM PAV experiment that has been submitted
 
         Returns
         -------
@@ -41,7 +41,7 @@ class Workflow:
 
     def submit(self, *args, server="127.0.0.1", port="11732"):
         """
-        Submit an entire ESDM PAV experiment workflow.
+        Submit an entire ESDM PAV experiment.
 
         Parameters
         ----------
@@ -82,7 +82,7 @@ class Workflow:
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
         """
-        Monitors the progress of the ESDM PAV experiment workflow execution
+        Monitors the progress of the ESDM PAV experiment execution
 
         Parameters
         ----------
@@ -103,15 +103,15 @@ class Workflow:
         Raises
         ------
         AttributeError
-            Raises AttributeError when workflow is not valid
+            Raises AttributeError when experiment is not valid
 
         Example
         -------
-         w1 = Workflow(name="Experiment 1", author="sample author",
+         e1 = Experiment(name="Experiment 1", author="sample author",
                         abstract="sample abstract")
          t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
-         w1.__runtime_connect()
+         w1 = Workflow(e1)
          w1.submit()
          w1.monitor(frequency=100, iterative=True, visual_mode=True)
         """
@@ -338,12 +338,8 @@ class Workflow:
             "oph_resume document_type=request;level=3;id={0};".format(self.experiment_id)
         )
         json_response = json.loads(self.pyophidia_client.last_response)
-
-        task_dict = {}
         tasks = _modify_task(json_response)
         sorted_tasks = _sort_tasks(tasks)
-        print("status_response")
-        print(status_response)
         workflow_status = _check_workflow_status(status_response)
         if iterative is True:
             while True:
@@ -351,9 +347,6 @@ class Workflow:
                     _draw(sorted_tasks, status_response, status_color_dictionary)
                 else:
                     print(workflow_status)
-                print("workflow status")
-                print(workflow_status)
-
                 if (not re.match("(?i).*RUNNING", workflow_status)
                     and
                     (not re.match("(?i).*PENDING", workflow_status))
@@ -371,7 +364,6 @@ class Workflow:
                 _draw(sorted_tasks, json_response, status_color_dictionary)
                 return workflow_status
             else:
-                print(workflow_status)
                 return workflow_status
 
 
