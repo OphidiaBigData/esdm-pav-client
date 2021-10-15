@@ -1,7 +1,6 @@
 class Experiment:
     """
-    Creates or loads an ESDM PAV experiment. It also contains methods
-    to manipulate the workflow.
+    Creates or loads an ESDM PAV experiment.
 
     An experiment is a sequence of tasks. Each task can be either independent
     or dependent on other tasks, for instance it processes the output of other
@@ -41,14 +40,19 @@ class Experiment:
     active_attributes = ["name", "author", "abstract"]
     task_attributes = ["run", "on_error", "type"]
     task_name_counter = 1
-    subworkflow_names = []
+    subexperiment_names = []
     pyophidia_client = None
-    workflow_id = None
+    experiment_id = None
+    username = "oph-test"
+    password = "abcd"
+    server = "127.0.0.1"
+    port = "11732"
+
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
             if k not in self.attributes:
-                raise AttributeError("Unknown workflow argument: {0}".format(k))
+                raise AttributeError("Unknown experiment argument: {0}".format(k))
             self.active_attributes.append(k)
         self.name = name
         self.author = author
@@ -70,29 +74,23 @@ class Experiment:
         except NameError:
             return False
 
-    def __runtime_connect(
-        self,
-        username="oph-test",
-        password="abcd",
-        server="127.0.0.1",
-        port="11732",
-    ):
+    def __runtime_connect(self):
         from PyOphidia import client
 
         self.__param_check(
             [
-                {"name": "username", "value": username, "type": str},
-                {"name": "server", "value": server, "type": str},
-                {"name": "port", "value": port, "type": str},
-                {"name": "password", "value": password, "type": str},
+                {"name": "username", "value": self.username, "type": str},
+                {"name": "server", "value": self.server, "type": str},
+                {"name": "port", "value": self.port, "type": str},
+                {"name": "password", "value": self.password, "type": str},
             ]
         )
         if self.pyophidia_client is None:
             self.pyophidia_client = client.Client(
-                username=username,
-                password=password,
-                server=server,
-                port=port,
+                username=self.username,
+                password=self.password,
+                server=self.server,
+                port=self.port,
                 api_mode=False,
             )
             if self.pyophidia_client.last_return_value != 0:
@@ -117,19 +115,19 @@ class Experiment:
                     )
 
     def wokrflow_to_json(self):
-        non_workflow_fields = [
+        non_experiment_fields = [
             "pyophidia_client",
             "task_name_counter",
-            "workflow_id",
+            "experiment_id",
         ]
-        new_workflow = {
+        new_experiment = {
             k: dict(self.__dict__)[k]
             for k in dict(self.__dict__).keys()
-            if k not in non_workflow_fields
+            if k not in non_experiment_fields
         }
-        if "tasks" in new_workflow.keys():
-            new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
-        return new_workflow
+        if "tasks" in new_experiment.keys():
+            new_experiment["tasks"] = [t.__dict__ for t in new_experiment["tasks"]]
+        return new_experiment
 
     def deinit(self):
         """
@@ -145,12 +143,12 @@ class Experiment:
         Parameters
         ----------
         task : <class 'esdm_pav_client.task.Task'>
-            Task to be added to the workflow
+            Task to be added to the experiment
 
         Raises
         ------
         AttributeError
-            If the task name is already in the workflow or if a dependency is
+            If the task name is already in the experiment or if a dependency is
             not fulfilled
 
         Example
@@ -180,7 +178,7 @@ class Experiment:
         Parameters
         ----------
         taskname : str
-            The name of the task to be found in the workflow
+            The name of the task to be found in the experiment
 
         Returns
         -------
@@ -201,22 +199,22 @@ class Experiment:
         elif len(tasks) == 0:
             return None
 
-    def save(self, workflowname):
+    def save(self, experimentname):
         """
-        Save the ESDM PAV experiment workflow as a JSON document
+        Save the ESDM PAV experiment experiment as a JSON document
 
         Parameters
         ----------
-        workflowname : str
-            The path to the ESDM PAV document file where the workflow is being
+        experimentname : str
+            The path to the ESDM PAV document file where the experiment is being
             saved
 
         Example
         -------
-        from esdm_pav_client import Workflow
-        w1 = Workflow(name="sample name", author="sample author",
+        from esdm_pav_client import experiment
+        w1 = experiment(name="sample name", author="sample author",
                         abstract="sample abstract")
-        w1.save("sample_workflow")
+        w1.save("sample_experiment")
 
         Raises
         ------
@@ -226,16 +224,16 @@ class Experiment:
         import json
         import os
 
-        if not isinstance(workflowname, str):
-            raise AttributeError("workflowname must be string")
-        if len(workflowname) == 0:
+        if not isinstance(experimentname, str):
+            raise AttributeError("experimentname must be string")
+        if len(experimentname) == 0:
             raise AttributeError(
-                "workflowname must contain more than 1 characters"
+                "experimentname must contain more than 1 characters"
             )
         data = self.wokrflow_to_json()
-        if not workflowname.endswith(".json"):
-            workflowname += ".json"
-        with open(os.path.join(os.getcwd(), workflowname), "w") as fp:
+        if not experimentname.endswith(".json"):
+            experimentname += ".json"
+        with open(os.path.join(os.getcwd(), experimentname), "w") as fp:
             json.dump(data, fp, indent=4)
 
     def newTask(
@@ -265,7 +263,7 @@ class Experiment:
         Returns
         -------
         t : <class 'esdm_pav_client.task.Task'>
-            Returns the task that was created and added to the workflow
+            Returns the task that was created and added to the experiment
 
         Raises
         ------
@@ -307,41 +305,41 @@ class Experiment:
         self.addTask(t)
         return t
 
-    def newSubWorkflow(self, workflow, params, dependencies={}, name=None):
+    def newSubexperiment(self, experiment, params, dependencies={}, name=None):
         """
-        Embeds an ESDM PAV experiment workflow into another workflow
+        Embeds an ESDM PAV experiment experiment into another experiment
 
         Parameters
         ----------
-        workflow : <class 'esdm_pav_client.workflow.Workflow'>
-            The workflow that will be embeded into our main workflow
+        experiment : <class 'esdm_pav_client.experiment.experiment'>
+            The experiment that will be embeded into our main experiment
         params : dict of keywords
             a dict of keywords that will be used to replace placeholders in
             the tasks
         dependencies : list, optional
             list of dependencies
         name : str, optional
-            a unique name for the workflow's tasks
+            a unique name for the experiment's tasks
 
         Returns
         -------
-        A list of the leaf tasks of the subworkflow
+        A list of the leaf tasks of the subexperiment
 
         Raises
         ------
         AttributeError
-            Raises AttributeError when there's an error with the workflows
+            Raises AttributeError when there's an error with the experiments
             (same name or non-existent), or when the dependencies are not
             fulfilled
 
         Example
         -------
-        w1 = Workflow(name="Experiment 1", author="sample author 1",
+        w1 = experiment(name="Experiment 1", author="sample author 1",
                         abstract="sample abstract 1")
-        w2 = Workflow(name="Experiment 2", author="sample author 2",
+        w2 = experiment(name="Experiment 2", author="sample author 2",
                         abstract="sample abstract 2")
         t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        task_array = w1.newSubWorkflow(name="new_subworkflow", workflow=w2,
+        task_array = w1.newSubexperiment(name="new_subexperiment", experiment=w2,
                                          params={}, dependencies=[])
         """
         try:
@@ -349,9 +347,9 @@ class Experiment:
         except ImportError:
             from .task import Task
 
-        def validate_workflow(w1, w2):
+        def validate_experiment(w1, w2):
             if not isinstance(w2, Experiment) or w1.name == w2.name:
-                raise AttributeError("Wrong workflow or same workflows")
+                raise AttributeError("Wrong experiment or same experiments")
 
         def dependency_check(dependency):
             if not isinstance(dependency, dict):
@@ -435,17 +433,17 @@ class Experiment:
 
         self.__param_check(
             [
-                {"name": "workflow", "value": workflow, "type": Experiment},
+                {"name": "experiment", "value": experiment, "type": Experiment},
                 {"name": "params", "value": params, "type": dict},
                 {"name": "dependencies", "value": dependencies, "type": list},
                 {"name": "name", "value": name, "type": str, "NoneValue": True},
             ]
         )
-        validate_workflow(self, workflow)
+        validate_experiment(self, experiment)
         task_id = 1
         all_tasks = []
         non_leaf_tasks = []
-        for task in workflow.tasks:
+        for task in experiment.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
             task_id += 1
             new_arguments = check_replace_args(
@@ -476,8 +474,8 @@ class Experiment:
 
         Returns
         -------
-        workflow : <class 'esdm_pav_client.experiment.Experiment'>
-            Returns the workflow object as it was loaded from the file
+        experiment : <class 'esdm_pav_client.experiment.Experiment'>
+            Returns the experiment object as it was loaded from the file
 
         Raises
         ------
@@ -505,20 +503,20 @@ class Experiment:
                 except json.decoder.JSONDecodeError:
                     raise ValueError("File is not a valid JSON")
 
-        def check_workflow_name(data):
+        def check_experiment_name(data):
             if "name" not in data.keys():
-                raise AttributeError("Workflow doesn't have a key")
+                raise AttributeError("experiment doesn't have a key")
 
-        def start_workflow(data):
+        def start_experiment(data):
             try:
                 from task import Task
             except ImportError:
                 from .task import Task
 
-            workflow = Experiment(name=data["name"])
+            experiment = Experiment(name=data["name"])
             del data["name"]
             attrs = {k: data[k] for k in data if k != "name" and k != "tasks"}
-            workflow.__dict__.update(attrs)
+            experiment.__dict__.update(attrs)
             for d in data["tasks"]:
                 new_task = Task(
                     operator=d["operator"],
@@ -534,13 +532,13 @@ class Experiment:
                         if k != "name" and k != "operator" and k != "arguments"
                     }
                 )
-                workflow.addTask(new_task)
-            return workflow
+                experiment.addTask(new_task)
+            return experiment
 
         data = file_check(file)
-        check_workflow_name(data)
-        workflow = start_workflow(data)
-        return workflow
+        check_experiment_name(data)
+        experiment = start_experiment(data)
+        return experiment
 
 
 
@@ -619,19 +617,19 @@ class Experiment:
                 cluster_counter += 1
             return subgraphs_list
 
-        def _check_workflow_validity():
+        def _check_experiment_validity():
             import json
 
             self.__runtime_connect()
-            workflow_validity = self.pyophidia_client.wisvalid(
+            experiment_validity = self.pyophidia_client.wisvalid(
                 json.dumps(self.wokrflow_to_json())
             )
-            if workflow_validity[1] == "Workflow is valid":
+            if experiment_validity[1] == "experiment is valid":
                 return True
             else:
                 return False
 
-        workflow_validity = _check_workflow_validity()
+        experiment_validity = _check_experiment_validity()
         self.__param_check(
             [
                 {"name": "filename", "value": filename, "type": str},
@@ -639,7 +637,7 @@ class Experiment:
             ]
         )
         if visual is False:
-            return workflow_validity
+            return experiment_validity
         diamond_commands = ["if", "endif", "else"]
         hexagonal_commands = ["for", "endfor"]
         dot = graphviz.Digraph(comment=self.name)

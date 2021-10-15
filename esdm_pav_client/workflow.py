@@ -1,19 +1,23 @@
 class Workflow:
     pyophidia_client = None
+    username = "oph-test"
+    password = "abcd"
+    server = "127.0.0.1"
+    port = "11732"
 
-    def __init__(self, experiment_id=None, workflow_object=None):
-        if experiment_id:
-            if workflow_object is not None:
-                raise AttributeError("You can't provide both experiment_id and"
-                                     "workflow_object")
-            self.experiment_id = experiment_id
-            self.workflow_object = None
-        else:
-            if experiment_id is not None:
-                raise AttributeError("You can't provide both experiment_id and"
-                                     "workflow_object")
-            self.workflow_object = workflow_object
+    def __init__(self, experiment):
+        try:
+            from experiment import Experiment
+        except ImportError:
+            from .experiment import Experiment
+        if isinstance(experiment, int):
+            self.experiment_id = experiment
+            self.experiment_object = None
+        elif experiment.__class__.__name__ == "Experiment":
+            self.experiment_object = experiment
             self.experiment_id = None
+        else:
+            raise ValueError("experiment argument must be int or experiment")
 
     def cancel(self):
         """
@@ -36,7 +40,8 @@ class Workflow:
             raise AttributeError("Cancel requires workflow_id")
         self.__runtime_connect()
         self.pyophidia_client.submit(
-            query="oph_cancel id={0};exec_mode=async;".format(self.experiment_id)
+            query="oph_cancel id={0};exec_mode=async;"
+                .format(self.experiment_id)
         )
 
     def submit(self, *args, server="127.0.0.1", port="11732"):
@@ -237,13 +242,16 @@ class Workflow:
             new_tasks = []
             for res in json_response["response"]:
                 if res["objkey"] == "resume":
-                    task_name_index = res["objcontent"][0]["rowkeys"].index("COMMAND")
-                    tasks = json.loads(res["objcontent"][0]["rowvalues"][0][task_name_index])
+                    task_name_index = res["objcontent"][0]["rowkeys"]\
+                        .index("COMMAND")
+                    tasks = json.loads(res["objcontent"][0]["rowvalues"][0]
+                                       [task_name_index])
             for task in tasks["tasks"]:
                 arguments = {}
                 for j in task["arguments"]:
                     arguments[j.split("=")[0]] = j.split("=")[1]
-                task_obj = Task(name=task["name"], operator=task["operator"], arguments=arguments)
+                task_obj = Task(name=task["name"], operator=task["operator"],
+                                arguments=arguments)
                 if "dependencies" in task.keys():
                     for dependency in task["dependencies"]:
                         task_obj.copyDependency(dependency)
@@ -254,7 +262,7 @@ class Workflow:
             task_dict = _extract_info(json_response)
             diamond_commands = ["if", "endif", "else"]
             hexagonal_commands = ["for", "endfor"]
-            # dot = graphviz.Digraph(comment=self.workflow_object.name)
+            # dot = graphviz.Digraph(comment=self.experiment_object.name)
             dot = graphviz.Digraph(comment="sample_name")
 
             for task in tasks:
@@ -335,7 +343,8 @@ class Workflow:
         )
         status_response = json.loads(self.pyophidia_client.last_response)
         self.pyophidia_client.submit(
-            "oph_resume document_type=request;level=3;id={0};".format(self.experiment_id)
+            "oph_resume document_type=request;level=3;id={0};"
+                .format(self.experiment_id)
         )
         json_response = json.loads(self.pyophidia_client.last_response)
         tasks = _modify_task(json_response)
@@ -344,7 +353,8 @@ class Workflow:
         if iterative is True:
             while True:
                 if visual_mode is True:
-                    _draw(sorted_tasks, status_response, status_color_dictionary)
+                    _draw(sorted_tasks, status_response,
+                          status_color_dictionary)
                 else:
                     print(workflow_status)
                 if (not re.match("(?i).*RUNNING", workflow_status)
@@ -357,7 +367,8 @@ class Workflow:
                 self.pyophidia_client.submit(
                     "oph_resume id={0};".format(self.experiment_id)
                 )
-                status_response = json.loads(self.pyophidia_client.last_response)
+                status_response = json.loads(self.pyophidia_client
+                                             .last_response)
                 workflow_status = _check_workflow_status(status_response)
         else:
             if visual_mode is True:
@@ -375,12 +386,14 @@ class Workflow:
                     and param["value"] is not None
                 ):
                     raise AttributeError(
-                        "{0} should be {1}".format(param["name"], param["type"])
+                        "{0} should be {1}".format(param["name"],
+                                                   param["type"])
                     )
             else:
                 if not isinstance(param["value"], param["type"]):
                     raise AttributeError(
-                        "{0} should be {1}".format(param["name"], param["type"])
+                        "{0} should be {1}".format(param["name"],
+                                                   param["type"])
                     )
 
     @staticmethod
@@ -404,37 +417,31 @@ class Workflow:
         ]
 
         new_workflow = {
-            k: dict(self.workflow_object.__dict__)[k]
-            for k in dict(self.workflow_object.__dict__).keys()
+            k: dict(self.experiment_object.__dict__)[k]
+            for k in dict(self.experiment_object.__dict__).keys()
             if k not in non_workflow_fields
         }
         if "tasks" in new_workflow.keys():
             new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
         return new_workflow
 
-    def __runtime_connect(
-        self,
-        username="oph-test",
-        password="abcd",
-        server="127.0.0.1",
-        port="11732",
-    ):
+    def __runtime_connect(self):
         from PyOphidia import client
 
         self.__param_check(
             [
-                {"name": "username", "value": username, "type": str},
-                {"name": "server", "value": server, "type": str},
-                {"name": "port", "value": port, "type": str},
-                {"name": "password", "value": password, "type": str},
+                {"name": "username", "value": self.username, "type": str},
+                {"name": "server", "value": self.server, "type": str},
+                {"name": "port", "value": self.port, "type": str},
+                {"name": "password", "value": self.password, "type": str},
             ]
         )
         if self.pyophidia_client is None:
             self.pyophidia_client = client.Client(
-                username=username,
-                password=password,
-                server=server,
-                port=port,
+                username=self.username,
+                password=self.password,
+                server=self.server,
+                port=self.port,
                 api_mode=False,
             )
             if self.pyophidia_client.last_return_value != 0:

@@ -84,7 +84,7 @@ def run(
         args = extract_other_args(workflow_args)
         verbose_check_display(verbose, "Reading the experiment workflow")
         e1 = Experiment.load(workflow)
-        w1 = Workflow(workflow_object=e1)
+        w1 = Workflow(e1)
         if not sync_mode:
             e1.exec_mode = "sync"
             verbose_check_display(
@@ -118,7 +118,7 @@ def run(
                     str(cancel)
                 ),
             )
-            w1 = Workflow(experiment_id=cancel)
+            w1 = Workflow(cancel)
             w1.cancel()
             return
     else:
