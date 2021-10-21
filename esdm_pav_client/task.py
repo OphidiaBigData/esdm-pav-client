@@ -33,9 +33,7 @@ class Task:
         self.type = type if type else "ophidia"
         self.name = name
         self.operator = operator
-        self.arguments = [
-            "{0}={1}".format(k, arguments[k]) for k in arguments.keys()
-        ]
+        self.arguments = ["{0}={1}".format(k, arguments[k]) for k in arguments.keys()]
         self.dependencies = []
         self.__dict__.update(kwargs)
 

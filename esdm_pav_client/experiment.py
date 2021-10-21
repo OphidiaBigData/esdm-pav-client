@@ -7,7 +7,7 @@ class Experiment:
     tasks.
 
     Construction::
-    w1 = Experiment(name="sample", author="sample author",
+    e1 = Experiment(name="sample", author="sample author",
                     abstract="sample abstract", on_error=None, run=None,
                     ncores=1, nthreads=None)
 
@@ -47,7 +47,6 @@ class Experiment:
     password = "abcd"
     server = "127.0.0.1"
     port = "11732"
-
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
@@ -101,18 +100,11 @@ class Experiment:
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
-                if (
-                    not isinstance(param["value"], param["type"])
-                    and param["value"] is not None
-                ):
-                    raise AttributeError(
-                        "{0} should be {1}".format(param["name"], param["type"])
-                    )
+                if not isinstance(param["value"], param["type"]) and param["value"] is not None:
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
             else:
                 if not isinstance(param["value"], param["type"]):
-                    raise AttributeError(
-                        "{0} should be {1}".format(param["name"], param["type"])
-                    )
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
         non_experiment_fields = [
@@ -120,11 +112,7 @@ class Experiment:
             "task_name_counter",
             "experiment_id",
         ]
-        new_experiment = {
-            k: dict(self.__dict__)[k]
-            for k in dict(self.__dict__).keys()
-            if k not in non_experiment_fields
-        }
+        new_experiment = {k: dict(self.__dict__)[k] for k in dict(self.__dict__).keys() if k not in non_experiment_fields}
         if "tasks" in new_experiment.keys():
             new_experiment["tasks"] = [t.__dict__ for t in new_experiment["tasks"]]
         return new_experiment
@@ -155,7 +143,7 @@ class Experiment:
         -------
         t1 = Task(name="sample task", operator='oph_reduce',
                     arguments={'operation': 'avg'})
-        w1.addTask(t1)
+        e1.addTask(t1)
         """
         if "name" not in task.__dict__.keys() or task.name is None:
             task.name = self.name + "_{0}".format(self.task_name_counter)
@@ -163,9 +151,7 @@ class Experiment:
             raise AttributeError("task already exists")
         if task.__dict__["dependencies"]:
             for dependency in task.__dict__["dependencies"]:
-                if dependency["task"] not in [
-                    task.__dict__["name"] for task in self.tasks
-                ]:
+                if dependency["task"] not in [task.__dict__["name"] for task in self.tasks]:
                     raise AttributeError("dependency not fulfilled")
         self.task_name_counter += 1
         self.tasks.append(task)
@@ -191,7 +177,7 @@ class Experiment:
         -------
         t1 = Task(name="task_one", operator="oph_reduce",
                     arguments={'operation': 'avg'})
-        task = w1.getTask(taskname="task_one")
+        task = e1.getTask(taskname="task_one")
         """
         tasks = [t for t in self.tasks if t["name"] == taskname]
         if len(tasks) == 1:
@@ -201,7 +187,7 @@ class Experiment:
 
     def save(self, experimentname):
         """
-        Save the ESDM PAV experiment experiment as a JSON document
+        Save the ESDM PAV experiment as a JSON document
 
         Parameters
         ----------
@@ -212,9 +198,9 @@ class Experiment:
         Example
         -------
         from esdm_pav_client import experiment
-        w1 = experiment(name="sample name", author="sample author",
+        e1 = experiment(name="sample name", author="sample author",
                         abstract="sample abstract")
-        w1.save("sample_experiment")
+        e1.save("sample_experiment")
 
         Raises
         ------
@@ -227,18 +213,14 @@ class Experiment:
         if not isinstance(experimentname, str):
             raise AttributeError("experimentname must be string")
         if len(experimentname) == 0:
-            raise AttributeError(
-                "experimentname must contain more than 1 characters"
-            )
+            raise AttributeError("experimentname must contain more than 1 characters")
         data = self.wokrflow_to_json()
         if not experimentname.endswith(".json"):
             experimentname += ".json"
         with open(os.path.join(os.getcwd(), experimentname), "w") as fp:
             json.dump(data, fp, indent=4)
 
-    def newTask(
-        self, operator, arguments={}, dependencies={}, name=None, **kwargs
-    ):
+    def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
         """
         Adds a new Task in the ESDM PAV experiment without the need
         of creating a esdm_pav_client.task.Task object
@@ -273,9 +255,9 @@ class Experiment:
 
         Example
         -------
-        w1 = Experiment(name="Experiment 1", author="sample author",
+        e1 = Experiment(name="Experiment 1", author="sample author",
                         abstract="sample abstract")
-        t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+        t1 = e1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
         """
         try:
@@ -307,7 +289,7 @@ class Experiment:
 
     def newSubexperiment(self, experiment, params, dependencies={}, name=None):
         """
-        Embeds an ESDM PAV experiment experiment into another experiment
+        Embeds an ESDM PAV experiment into another experiment
 
         Parameters
         ----------
@@ -334,12 +316,12 @@ class Experiment:
 
         Example
         -------
-        w1 = experiment(name="Experiment 1", author="sample author 1",
+        e1 = experiment(name="Experiment 1", author="sample author 1",
                         abstract="sample abstract 1")
-        w2 = experiment(name="Experiment 2", author="sample author 2",
+        e2 = experiment(name="Experiment 2", author="sample author 2",
                         abstract="sample abstract 2")
-        t1 = w2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        task_array = w1.newSubexperiment(name="new_subexperiment", experiment=w2,
+        t1 = e2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
+        task_array = e1.newSubexperiment(name="new_subexperiment", experiment=e2,
                                          params={}, dependencies=[])
         """
         try:
@@ -347,8 +329,8 @@ class Experiment:
         except ImportError:
             from .task import Task
 
-        def validate_experiment(w1, w2):
-            if not isinstance(w2, Experiment) or w1.name == w2.name:
+        def validate_experiment(e1, e2):
+            if not isinstance(e2, Experiment) or e1.name == e2.name:
                 raise AttributeError("Wrong experiment or same experiments")
 
         def dependency_check(dependency):
@@ -357,9 +339,7 @@ class Experiment:
             if len(dependency.keys()) > 2:
                 raise AttributeError("Wrong dependency arguments")
             elif len(dependency.keys()) == 2:
-                if ("task" not in dependency.keys()) or (
-                    "argument" not in dependency.keys()
-                ):
+                if ("task" not in dependency.keys()) or ("argument" not in dependency.keys()):
                     raise AttributeError("Wrong dependency arguments")
             else:
                 if "task" not in dependency.keys():
@@ -391,9 +371,7 @@ class Experiment:
             if given_name:
                 return "{0}_{1}".format(given_name, previous_name)
             else:
-                return "{0}_{1}_{2}".format(
-                    self.name, str(task_id), previous_name
-                )
+                return "{0}_{1}_{2}".format(self.name, str(task_id), previous_name)
 
         def check_replace_args(params, task_arguments):
             import re
@@ -415,10 +393,7 @@ class Experiment:
                     new_task_arguments[k] = task_arguments[k]
             for k in task_arguments:
                 if re.search(r"(\$.*)", task_arguments[k]):
-                    if (
-                        re.findall(r"(\$.*)", task_arguments[k])[0]
-                        in params.keys()
-                    ):
+                    if re.findall(r"(\$.*)", task_arguments[k])[0] in params.keys():
                         new_task_arguments[k] = re.sub(
                             r"(\$.*)",
                             params[re.findall(r"(\$.*)", task_arguments[k])[0]],
@@ -446,9 +421,7 @@ class Experiment:
         for task in experiment.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
             task_id += 1
-            new_arguments = check_replace_args(
-                params, task.reverted_arguments()
-            )
+            new_arguments = check_replace_args(params, task.reverted_arguments())
             new_task = Task(
                 operator=task.operator,
                 arguments=new_arguments,
@@ -487,7 +460,7 @@ class Experiment:
 
         Example
         -------
-        w1 = Experiment.load("json_file.json")
+        e1 = Experiment.load("json_file.json")
         """
 
         def file_check(filename):
@@ -521,17 +494,9 @@ class Experiment:
                 new_task = Task(
                     operator=d["operator"],
                     name=d["name"],
-                    arguments={
-                        a.split("=")[0]: a.split("=")[1] for a in d["arguments"]
-                    },
+                    arguments={a.split("=")[0]: a.split("=")[1] for a in d["arguments"]},
                 )
-                new_task.__dict__.update(
-                    {
-                        k: d[k]
-                        for k in d
-                        if k != "name" and k != "operator" and k != "arguments"
-                    }
-                )
+                new_task.__dict__.update({k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"})
                 experiment.addTask(new_task)
             return experiment
 
@@ -539,8 +504,6 @@ class Experiment:
         check_experiment_name(data)
         experiment = start_experiment(data)
         return experiment
-
-
 
     def check(self, filename="sample.dot", visual=True):
         """
@@ -558,11 +521,11 @@ class Experiment:
 
         Example
         -------
-        w1 = Experiment(name="Experiment 1", author="sample author",
+        e1 = Experiment(name="Experiment 1", author="sample author",
                        abstract="sample abstract")
-        t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+        t1 = e1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                          dependencies={})
-        w1.check("myfile.dot")
+        e1.check("myfile.dot")
         """
         import graphviz
 
@@ -571,47 +534,21 @@ class Experiment:
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
-            subgraphs_list = [
-                {"start_index": start_index, "operator": "if"}
-                for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "if"
-                ]
-            ]
-            subgraphs_list += [
-                {"start_index": start_index, "operator": "for"}
-                for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "for"
-                ]
-            ]
-            subgraphs_list = sorted(
-                subgraphs_list, key=lambda i: i["start_index"]
-            )
-            closing_indexes = sorted(
-                [
-                    i
-                    for i, t in enumerate(list_of_operators)
-                    if t == "endfor" or t == "endif"
-                ]
-            )[::-1]
+            subgraphs_list = [{"start_index": start_index, "operator": "if"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]]
+            subgraphs_list += [{"start_index": start_index, "operator": "for"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]]
+            subgraphs_list = sorted(subgraphs_list, key=lambda i: i["start_index"])
+            closing_indexes = sorted([i for i, t in enumerate(list_of_operators) if t == "endfor" or t == "endif"])[::-1]
             for i in range(0, len(subgraphs_list)):
                 subgraphs_list[i]["end_index"] = closing_indexes[i]
 
             cluster_counter = 0
             for subgraph in subgraphs_list:
-                new_dot = graphviz.Digraph(
-                    name="cluster_{0}".format(str(cluster_counter))
-                )
-                for i in range(
-                    subgraph["start_index"], subgraph["end_index"] + 1
-                ):
+                new_dot = graphviz.Digraph(name="cluster_{0}".format(str(cluster_counter)))
+                for i in range(subgraph["start_index"], subgraph["end_index"] + 1):
                     new_dot.attr("node")
                     new_dot.node(
                         tasks[i].name,
-                        _trim_text(tasks[i].name)
-                        + "\n"
-                        + _trim_text(tasks[i].type)
-                        + "\n"
-                        + _trim_text(tasks[i].operator),
+                        _trim_text(tasks[i].name) + "\n" + _trim_text(tasks[i].type) + "\n" + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -621,9 +558,7 @@ class Experiment:
             import json
 
             self.__runtime_connect()
-            experiment_validity = self.pyophidia_client.wisvalid(
-                json.dumps(self.wokrflow_to_json())
-            )
+            experiment_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
             if experiment_validity[1] == "experiment is valid":
                 return True
             else:
@@ -642,9 +577,7 @@ class Experiment:
         hexagonal_commands = ["for", "endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
-            dot.attr(
-                "node", shape="circle", width="1", penwidth="1", fontsize="10pt"
-            )
+            dot.attr("node", shape="circle", width="1", penwidth="1", fontsize="10pt")
             dot.attr("edge", penwidth="1")
             if task.operator in diamond_commands:
                 dot.attr("node", shape="diamond")
@@ -652,11 +585,7 @@ class Experiment:
                 dot.attr("node", shape="hexagon")
             dot.node(
                 task.name,
-                _trim_text(task.name)
-                + "\n"
-                + _trim_text(task.type)
-                + "\n"
-                + _trim_text(task.operator),
+                _trim_text(task.name) + "\n" + _trim_text(task.type) + "\n" + _trim_text(task.operator),
             )
             dot.attr("edge", style="solid")
             for d in task.dependencies:
@@ -676,6 +605,3 @@ class Experiment:
             display(dot)
         else:
             dot.render(filename, view=True)
-
-
-

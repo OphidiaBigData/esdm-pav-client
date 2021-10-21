@@ -15,6 +15,7 @@ class Workflow:
         Raises ValueError if the provided parameter is not int or an Experiment
         object
     """
+
     pyophidia_client = None
     username = "oph-test"
     password = "abcd"
@@ -56,10 +57,7 @@ class Workflow:
         if self.experiment_id is None:
             raise AttributeError("Cancel requires workflow_id")
         self.__runtime_connect()
-        self.pyophidia_client.submit(
-            query="oph_cancel id={0};exec_mode=async;"
-                .format(self.experiment_id)
-        )
+        self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.experiment_id))
 
     def submit(self, *args, server="127.0.0.1", port="11732"):
         """
@@ -88,18 +86,16 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
         import json
+
         if self.experiment_id is not None:
-            raise AttributeError("You can't submit a workflow that was already"
-                                 "submitted")
+            raise AttributeError("You can't submit a workflow that was already" "submitted")
         self.exec_mode = "async"
         dict_workflow = json.dumps(self.workflow_to_json())
         str_workflow = str(dict_workflow)
         self.__runtime_connect()
         self.pyophidia_client.wsubmit(str_workflow, *args)
         self.exec_mode = "sync"
-        self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split(
-            "#"
-        )[0]
+        self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
         return self.workflow_id
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
@@ -154,56 +150,27 @@ class Workflow:
             import json
 
             self.__runtime_connect()
-            workflow_validity = self.pyophidia_client.wisvalid(
-                json.dumps(self.workflow_to_json())
-            )
+            workflow_validity = self.pyophidia_client.wisvalid(json.dumps(self.workflow_to_json()))
             if not workflow_validity[1] == "Workflow is valid":
                 raise AttributeError("Workflow is not valid")
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
-            subgraphs_list = [
-                {"start_index": start_index, "operator": "if"}
-                for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "if"
-                ]
-            ]
-            subgraphs_list += [
-                {"start_index": start_index, "operator": "for"}
-                for start_index in [
-                    i for i, t in enumerate(list_of_operators) if t == "for"
-                ]
-            ]
-            subgraphs_list = sorted(
-                subgraphs_list, key=lambda i: i["start_index"]
-            )
-            closing_indexes = sorted(
-                [
-                    i
-                    for i, t in enumerate(list_of_operators)
-                    if
-                    re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
-                ]
-            )[::-1]
+            subgraphs_list = [{"start_index": start_index, "operator": "if"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]]
+            subgraphs_list += [{"start_index": start_index, "operator": "for"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]]
+            subgraphs_list = sorted(subgraphs_list, key=lambda i: i["start_index"])
+            closing_indexes = sorted([i for i, t in enumerate(list_of_operators) if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)])[::-1]
             for i in range(0, len(subgraphs_list)):
                 subgraphs_list[i]["end_index"] = closing_indexes[i]
 
             cluster_counter = 0
             for subgraph in subgraphs_list:
-                new_dot = graphviz.Digraph(
-                    name="cluster_{0}".format(str(cluster_counter))
-                )
-                for i in range(
-                        subgraph["start_index"], subgraph["end_index"] + 1
-                ):
+                new_dot = graphviz.Digraph(name="cluster_{0}".format(str(cluster_counter)))
+                for i in range(subgraph["start_index"], subgraph["end_index"] + 1):
                     new_dot.attr("node")
                     new_dot.node(
                         tasks[i].name,
-                        _trim_text(tasks[i].name)
-                        + "\n"
-                        + _trim_text(tasks[i].type)
-                        + "\n"
-                        + _trim_text(tasks[i].operator),
+                        _trim_text(tasks[i].name) + "\n" + _trim_text(tasks[i].type) + "\n" + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -218,16 +185,10 @@ class Workflow:
             task_dict = {}
             for res in json_response["response"]:
                 if res["objkey"] == "workflow_list":
-                    task_name_index = res["objcontent"][0]["rowkeys"].index(
-                        "TASK NAME"
-                    )
-                    status_index = res["objcontent"][0]["rowkeys"].index(
-                        "EXIT STATUS"
-                    )
+                    task_name_index = res["objcontent"][0]["rowkeys"].index("TASK NAME")
+                    status_index = res["objcontent"][0]["rowkeys"].index("EXIT STATUS")
                     for task in res["objcontent"][0]["rowvalues"]:
-                        task_dict[task[int(task_name_index)]] = task[
-                            int(status_index)
-                        ]
+                        task_dict[task[int(task_name_index)]] = task[int(status_index)]
             return task_dict
 
         def _match_shapes(operator, commands):
@@ -240,12 +201,9 @@ class Workflow:
             sorted_tasks = []
             for i in range(0, len(tasks)):
                 if re.findall(r".*?(\([0-9].*\))", tasks[i].name):
-                    clean_name = tasks[i].name.replace(
-                        re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], "")
+                    clean_name = tasks[i].name.replace(re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], "")
                     for task in tasks[i:]:
-                        if clean_name in task.name and task.name \
-                                not in [t.name for t in sorted_tasks] \
-                                and re.findall(r".*?(\([0-9].*\))", task.name):
+                        if clean_name in task.name and task.name not in [t.name for t in sorted_tasks] and re.findall(r".*?(\([0-9].*\))", task.name):
                             sorted_tasks.append(task)
                 else:
                     sorted_tasks.append(tasks[i])
@@ -260,24 +218,25 @@ class Workflow:
             new_tasks = []
             for res in json_response["response"]:
                 if res["objkey"] == "resume":
-                    task_name_index = res["objcontent"][0]["rowkeys"]\
-                        .index("COMMAND")
-                    tasks = json.loads(res["objcontent"][0]["rowvalues"][0]
-                                       [task_name_index])
+                    task_name_index = res["objcontent"][0]["rowkeys"].index("COMMAND")
+                    tasks = json.loads(res["objcontent"][0]["rowvalues"][0][task_name_index])
             self.experiment_name = tasks["name"]
             for task in tasks["tasks"]:
                 arguments = {}
                 for j in task["arguments"]:
                     arguments[j.split("=")[0]] = j.split("=")[1]
-                task_obj = Task(name=task["name"], operator=task["operator"],
-                                arguments=arguments)
+                task_obj = Task(name=task["name"], operator=task["operator"], arguments=arguments)
                 if "dependencies" in task.keys():
                     for dependency in task["dependencies"]:
                         task_obj.copyDependency(dependency)
                 new_tasks.append(task_obj)
             return new_tasks
 
-        def _draw(tasks, json_response, status_color_dictionary=None, ):
+        def _draw(
+            tasks,
+            json_response,
+            status_color_dictionary=None,
+        ):
             task_dict = _extract_info(json_response)
             diamond_commands = ["if", "endif", "else"]
             hexagonal_commands = ["for", "endfor"]
@@ -296,9 +255,7 @@ class Workflow:
                 if task.name in task_dict and status_color_dictionary:
                     dot.attr(
                         "node",
-                        fillcolor=_find_matches(
-                            status_color_dictionary, task_dict[task.name]
-                        ),
+                        fillcolor=_find_matches(status_color_dictionary, task_dict[task.name]),
                         style="filled",
                     )
                 dot.attr("edge", penwidth="1")
@@ -308,11 +265,7 @@ class Workflow:
                     dot.attr("node", shape="hexagon")
                 dot.node(
                     task.name,
-                    _trim_text(task.name)
-                    + "\n"
-                    + _trim_text(task.type)
-                    + "\n"
-                    + _trim_text(task.operator),
+                    _trim_text(task.name) + "\n" + _trim_text(task.type) + "\n" + _trim_text(task.operator),
                 )
                 dot.attr("edge", style="solid")
                 for d in task.dependencies:
@@ -354,14 +307,9 @@ class Workflow:
             "(?i).*SKIPPED": "yellow",
         }
         self.__runtime_connect()
-        self.pyophidia_client.submit(
-            "oph_resume id={0};".format(self.experiment_id)
-        )
+        self.pyophidia_client.submit("oph_resume id={0};".format(self.experiment_id))
         status_response = json.loads(self.pyophidia_client.last_response)
-        self.pyophidia_client.submit(
-            "oph_resume document_type=request;level=3;id={0};"
-                .format(self.experiment_id)
-        )
+        self.pyophidia_client.submit("oph_resume document_type=request;level=3;id={0};".format(self.experiment_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         tasks = _modify_task(json_response)
         sorted_tasks = _sort_tasks(tasks)
@@ -369,22 +317,14 @@ class Workflow:
         if iterative is True:
             while True:
                 if visual_mode is True:
-                    _draw(sorted_tasks, status_response,
-                          status_color_dictionary)
+                    _draw(sorted_tasks, status_response, status_color_dictionary)
                 else:
                     print(workflow_status)
-                if (not re.match("(?i).*RUNNING", workflow_status)
-                    and
-                    (not re.match("(?i).*PENDING", workflow_status))
-
-                ):
+                if not re.match("(?i).*RUNNING", workflow_status) and (not re.match("(?i).*PENDING", workflow_status)):
                     return workflow_status
                 time.sleep(frequency)
-                self.pyophidia_client.submit(
-                    "oph_resume id={0};".format(self.experiment_id)
-                )
-                status_response = json.loads(self.pyophidia_client
-                                             .last_response)
+                self.pyophidia_client.submit("oph_resume id={0};".format(self.experiment_id))
+                status_response = json.loads(self.pyophidia_client.last_response)
                 workflow_status = _check_workflow_status(status_response)
         else:
             if visual_mode is True:
@@ -396,20 +336,11 @@ class Workflow:
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
-                if (
-                        not isinstance(param["value"], param["type"])
-                        and param["value"] is not None
-                ):
-                    raise AttributeError(
-                        "{0} should be {1}".format(param["name"],
-                                                   param["type"])
-                    )
+                if not isinstance(param["value"], param["type"]) and param["value"] is not None:
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
             else:
                 if not isinstance(param["value"], param["type"]):
-                    raise AttributeError(
-                        "{0} should be {1}".format(param["name"],
-                                                   param["type"])
-                    )
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     @staticmethod
     def _notebook_check():
@@ -431,11 +362,7 @@ class Workflow:
             "workflow_id",
         ]
 
-        new_workflow = {
-            k: dict(self.experiment_object.__dict__)[k]
-            for k in dict(self.experiment_object.__dict__).keys()
-            if k not in non_workflow_fields
-        }
+        new_workflow = {k: dict(self.experiment_object.__dict__)[k] for k in dict(self.experiment_object.__dict__).keys() if k not in non_workflow_fields}
         if "tasks" in new_workflow.keys():
             new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
         return new_workflow
