@@ -91,25 +91,25 @@ def run(
                 verbose,
                 "Submitting the experiment workflow in synchronous mode",
             )
-            w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
             if monitor:
-                w1.monitor()
+                w2 = Workflow(int(w1.workflow_id))
+                w2.monitor()
         else:
             verbose_check_display(
                 verbose,
                 "Submitting the experiment workflow in asynchronous mode",
             )
-            w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
-            w1.monitor(visual_mode=False, frequency=10)
-
+            if monitor:
+                w2 = Workflow(int(w1.workflow_id))
+                w2.monitor()
     elif cancel:
         if not sync_mode:
             verbose_check_display(

@@ -1,9 +1,26 @@
 class Workflow:
+    """
+    Submits, cancels, or monitors an experiment object.
+
+    Construction::
+    w1 = Workflow(experiment=e1)
+
+    Parameters
+    ----------
+    experiment: int or <class 'esdm_pav_client.experiment.Experiment'>
+
+    Raises
+    ------
+    ValueError
+        Raises ValueError if the provided parameter is not int or an Experiment
+        object
+    """
     pyophidia_client = None
     username = "oph-test"
     password = "abcd"
     server = "127.0.0.1"
     port = "11732"
+    experiment_name = None
 
     def __init__(self, experiment):
         try:
@@ -164,7 +181,8 @@ class Workflow:
                 [
                     i
                     for i, t in enumerate(list_of_operators)
-                    if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
+                    if
+                    re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
                 ]
             )[::-1]
             for i in range(0, len(subgraphs_list)):
@@ -176,7 +194,7 @@ class Workflow:
                     name="cluster_{0}".format(str(cluster_counter))
                 )
                 for i in range(
-                    subgraph["start_index"], subgraph["end_index"] + 1
+                        subgraph["start_index"], subgraph["end_index"] + 1
                 ):
                     new_dot.attr("node")
                     new_dot.node(
@@ -214,24 +232,24 @@ class Workflow:
 
         def _match_shapes(operator, commands):
             for command in commands:
-                if re.match("(?i).*"+command, operator):
+                if re.match("(?i).*" + command, operator):
                     return True
             return False
 
         def _sort_tasks(tasks):
             sorted_tasks = []
-            for i in range (0, len(tasks)):
+            for i in range(0, len(tasks)):
                 if re.findall(r".*?(\([0-9].*\))", tasks[i].name):
                     clean_name = tasks[i].name.replace(
                         re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], "")
                     for task in tasks[i:]:
-                        if clean_name in task.name and task.name not in [t.name for t in sorted_tasks] and re.findall(r".*?(\([0-9].*\))", task.name):
+                        if clean_name in task.name and task.name \
+                                not in [t.name for t in sorted_tasks] \
+                                and re.findall(r".*?(\([0-9].*\))", task.name):
                             sorted_tasks.append(task)
                 else:
                     sorted_tasks.append(tasks[i])
             return sorted_tasks
-
-
 
         def _modify_task(json_response):
             try:
@@ -246,6 +264,7 @@ class Workflow:
                         .index("COMMAND")
                     tasks = json.loads(res["objcontent"][0]["rowvalues"][0]
                                        [task_name_index])
+            self.experiment_name = tasks["name"]
             for task in tasks["tasks"]:
                 arguments = {}
                 for j in task["arguments"]:
@@ -262,9 +281,7 @@ class Workflow:
             task_dict = _extract_info(json_response)
             diamond_commands = ["if", "endif", "else"]
             hexagonal_commands = ["for", "endfor"]
-            # dot = graphviz.Digraph(comment=self.experiment_object.name)
-            dot = graphviz.Digraph(comment="sample_name")
-
+            dot = graphviz.Digraph(comment=self.experiment_name)
             for task in tasks:
                 dot.attr(
                     "node",
@@ -336,7 +353,6 @@ class Workflow:
             "(?i).*ABORTED": "red",
             "(?i).*SKIPPED": "yellow",
         }
-        # _check_workflow_validity()
         self.__runtime_connect()
         self.pyophidia_client.submit(
             "oph_resume id={0};".format(self.experiment_id)
@@ -377,13 +393,12 @@ class Workflow:
             else:
                 return workflow_status
 
-
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
                 if (
-                    not isinstance(param["value"], param["type"])
-                    and param["value"] is not None
+                        not isinstance(param["value"], param["type"])
+                        and param["value"] is not None
                 ):
                     raise AttributeError(
                         "{0} should be {1}".format(param["name"],
