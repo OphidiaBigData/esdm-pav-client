@@ -1,11 +1,13 @@
 import click
 import sys
 import os
-from esdm_pav_client import Workflow
-
 previous_dir = os.path.dirname(os.getcwd())
 sys.path.insert(0, os.path.dirname(previous_dir))
 sys.path.insert(0, "..")
+from esdm_pav_client import Workflow
+from esdm_pav_client import Experiment
+
+
 
 
 def verbose_check_display(verbose, text):
@@ -81,32 +83,33 @@ def run(
         workflow, server, port = modify_args(workflow, server, port)
         args = extract_other_args(workflow_args)
         verbose_check_display(verbose, "Reading the experiment workflow")
-        w1 = Workflow.load(workflow)
+        e1 = Experiment.load(workflow)
+        w1 = Workflow(e1)
         if not sync_mode:
-            w1.exec_mode = "sync"
+            e1.exec_mode = "sync"
             verbose_check_display(
                 verbose,
                 "Submitting the experiment workflow in synchronous mode",
             )
-            w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
             if monitor:
-                w1.monitor()
+                w2 = Workflow(int(w1.workflow_id))
+                w2.monitor()
         else:
             verbose_check_display(
                 verbose,
                 "Submitting the experiment workflow in asynchronous mode",
             )
-            w1.submit(server=server, port=port, *args)
             verbose_check_display(
                 True,
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
-            w1.monitor(visual_mode=False, frequency=10)
-
+            if monitor:
+                w2 = Workflow(int(w1.workflow_id))
+                w2.monitor()
     elif cancel:
         if not sync_mode:
             verbose_check_display(
@@ -115,8 +118,7 @@ def run(
                     str(cancel)
                 ),
             )
-            w1 = Workflow(name="sample_workflow")
-            w1.workflow_id = cancel
+            w1 = Workflow(cancel)
             w1.cancel()
             return
     else:
