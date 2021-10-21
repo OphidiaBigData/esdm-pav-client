@@ -59,7 +59,7 @@ class Workflow:
         self.__runtime_connect()
         self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.experiment_id))
 
-    def submit(self, *args, server="127.0.0.1", port="11732"):
+    def submit(self, *args, server="127.0.0.1", port="11732", checkpoint="all"):
         """
         Submit an entire ESDM PAV experiment.
 
@@ -71,6 +71,8 @@ class Workflow:
             ESDM PAV runtime port
         args : list
             list of arguments to be substituted in the workflow
+        checkpoint : str, optional
+            name of the checkpoint which the execution has to start from
 
 
         Raises
@@ -82,20 +84,31 @@ class Workflow:
 
         Example
         -------
-        w1 = Workflow.load("workflow.json")
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
-        import json
 
-        if self.experiment_id is not None:
-            raise AttributeError("You can't submit a workflow that was already" "submitted")
         self.exec_mode = "async"
-        dict_workflow = json.dumps(self.workflow_to_json())
-        str_workflow = str(dict_workflow)
-        self.__runtime_connect()
-        self.pyophidia_client.wsubmit(str_workflow, *args)
+
+        if checkpoint == "all":
+
+            import json
+
+            if self.experiment_id is not None:
+                raise AttributeError("You can't submit a workflow that was already" "submitted")
+            dict_workflow = json.dumps(self.workflow_to_json())
+            str_workflow = str(dict_workflow)
+            self.__runtime_connect()
+            self.pyophidia_client.wsubmit(str_workflow, *args)
+            self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
+
+        else:
+
+            query = "oph_resume document_type=request;execute=yes;"
+            query += "id=" + self.workflow_id + ";"
+            query += "checkpoint=" + checkpoint + ";"
+            self.pyophidia_client.submit(query)
+
         self.exec_mode = "sync"
-        self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
         return self.workflow_id
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
