@@ -42,7 +42,6 @@ class Experiment:
     task_name_counter = 1
     subexperiment_names = []
     pyophidia_client = None
-    experiment_id = None
     username = "oph-test"
     password = "abcd"
     server = "127.0.0.1"
@@ -109,8 +108,7 @@ class Experiment:
     def wokrflow_to_json(self):
         non_experiment_fields = [
             "pyophidia_client",
-            "task_name_counter",
-            "experiment_id",
+            "task_name_counter"
         ]
         new_experiment = {k: dict(self.__dict__)[k] for k in dict(self.__dict__).keys() if k not in non_experiment_fields}
         if "tasks" in new_experiment.keys():
