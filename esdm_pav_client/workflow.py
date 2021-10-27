@@ -37,6 +37,14 @@ class Workflow:
         else:
             raise ValueError("experiment argument must be int or experiment")
 
+    def deinit(self):
+        """
+        Reverse the initialization of the object
+        """
+        for k in dict(self.__dict__):
+            print(k)
+            self.__delattr__(k)
+
     def cancel(self):
         """
         Cancel the ESDM PAV experiment that has been submitted
