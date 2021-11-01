@@ -103,7 +103,7 @@ class Experiment:
                     raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
             else:
                 if not isinstance(param["value"], param["type"]):
-                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
+                    raise C("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
         non_experiment_fields = [
@@ -603,3 +603,58 @@ class Experiment:
             display(dot)
         else:
             dot.render(filename, view=True)
+
+    def newWaitTask(self, name="name", type="file", output="esdm://etos.nc",
+                    measure="tos", subset_dims="time",
+                    subset_filter="2001-05_2001-06", subset_type="coord",
+                    timeout="10"):
+        """
+
+        Parameters
+        ----------
+        name: str, optional
+            The name of the task. Default value is "name"
+        type: str, optional
+            The type of the argument. Default value is "file"
+        output: str, optional
+            The output file location. Default value is "esdm://etos.nc"
+        measure: str, optional
+            The measure variable. Default value is "tos"
+        subset_dims: str, optional
+            The subset dimension. Default value is "time"
+        subset_filter: str, optional
+            The subset filter. Default value is "2001-05_2001-06"
+        subset_type: str, optional
+            The subset type. Default value is "coord"
+        timeout: str, optional
+            The timeout value. Default value is "10"
+
+        Raises
+        ------
+        AttributeError
+            If a provided argument is of wrong type.
+
+        Returns
+        -------
+
+        """
+        self.__param_check(
+            [
+                {"name": "name", "value": name, "type": str},
+                {"name": "type", "value": type, "type": str},
+                {"name": "output", "value": output, "type": str},
+                {"name": "measure", "value": measure, "type": str},
+                {"name": "subset_dims", "value": subset_dims, "type": str},
+                {"name": "subset_filter", "value": subset_filter, "type": str},
+                {"name": "subset_type", "value": subset_type, "type": str},
+                {"name": "timeout", "value": timeout, "type": str}
+
+            ]
+        )
+        self.newTask(name=name, type="control", operator="wait",
+                     arguments={"type": type, "output": output,
+                                "measure": measure,
+                                "subset_dims": subset_dims,
+                                "subset_filter": subset_filter,
+                                "subset_type": subset_type,
+                                "timeout": timeout})
