@@ -99,11 +99,14 @@ class Experiment:
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
-                if not isinstance(param["value"], param["type"]) and param["value"] is not None:
-                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
+                if not isinstance(param["value"], param["type"]) \
+                        and param["value"] is not None:
+                    raise AttributeError("{0} should be {1}"
+                                         .format(param["name"], param["type"]))
             else:
                 if not isinstance(param["value"], param["type"]):
-                    raise C("{0} should be {1}".format(param["name"], param["type"]))
+                    raise AttributeError("{0} should be {1}"
+                                         .format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
         non_experiment_fields = [
@@ -604,9 +607,9 @@ class Experiment:
         else:
             dot.render(filename, view=True)
 
-    def newWaitTask(self, name="name", type="file", output="esdm://etos.nc",
-                    measure="tos", subset_dims="time",
-                    subset_filter="2001-05_2001-06", subset_type="coord",
+    def newWaitTask(self, name=None, type=None, output=None,
+                    measure=None, subset_dims=None,
+                    subset_filter=None, subset_type="coord",
                     timeout="10"):
         """
 
@@ -640,17 +643,32 @@ class Experiment:
         """
         self.__param_check(
             [
-                {"name": "name", "value": name, "type": str},
-                {"name": "type", "value": type, "type": str},
-                {"name": "output", "value": output, "type": str},
-                {"name": "measure", "value": measure, "type": str},
-                {"name": "subset_dims", "value": subset_dims, "type": str},
-                {"name": "subset_filter", "value": subset_filter, "type": str},
-                {"name": "subset_type", "value": subset_type, "type": str},
-                {"name": "timeout", "value": timeout, "type": str}
+                {"name": "name", "value": name, "type": str,
+                 "NoneValue": True},
+                {"name": "type", "value": type, "type": str,
+                 "NoneValue": True},
+                {"name": "output", "value": output, "type": str,
+                 "NoneValue": True},
+                {"name": "measure", "value": measure, "type": str,
+                 "NoneValue": True},
+                {"name": "subset_dims", "value": subset_dims, "type": str,
+                 "NoneValue": True},
+                {"name": "subset_filter", "value": subset_filter, "type": str,
+                 "NoneValue": True},
+                {"name": "subset_type", "value": subset_type, "type": str,
+                 "NoneValue": True},
+                {"name": "timeout", "value": timeout, "type": str,
+                 "NoneValue": True}
 
             ]
         )
+        if name is None:
+            name = "name"
+        if type == "file":
+            if output is None:
+                raise ValueError("If type is set to file you would have to "
+                                 "provide an output argument")
+
         self.newTask(name=name, type="control", operator="wait",
                      arguments={"type": type, "output": output,
                                 "measure": measure,
