@@ -95,7 +95,8 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
 
-        self.exec_mode = "async"
+        exec_mode = self.experiment_object.exec_mode 
+        self.experiment_object.exec_mode =  "async"
 
         if checkpoint == "all":
 
@@ -116,7 +117,7 @@ class Workflow:
             self.pyophidia_client.submit(query)
 
         self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
-        self.exec_mode = "sync"
+        self.experiment_object.exec_mode = exec_mode
         return self.workflow_id
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
@@ -152,7 +153,7 @@ class Workflow:
                           dependencies={})
          w1 = Workflow(e1)
          w1.submit()
-         w1.monitor(frequency=100, iterative=True, visual_mode=True)
+         w1.monitor(frequency=10, iterative=True, visual_mode=True)
         """
         import graphviz
         import json
@@ -246,7 +247,7 @@ class Workflow:
                 arguments = {}
                 for j in task["arguments"]:
                     arguments[j.split("=")[0]] = j.split("=")[1]
-                task_obj = Task(name=task["name"], operator=task["operator"], arguments=arguments)
+                task_obj = Task(name=task["name"], operator=task["operator"], type=task["type"], arguments=arguments)
                 if "dependencies" in task.keys():
                     for dependency in task["dependencies"]:
                         task_obj.copyDependency(dependency)
