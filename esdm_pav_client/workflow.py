@@ -29,11 +29,11 @@ class Workflow:
         except ImportError:
             from .experiment import Experiment
         if isinstance(experiment, int):
-            self.experiment_id = experiment
+            self.workflow_id = experiment
             self.experiment_object = None
         elif experiment.__class__.__name__ == "Experiment":
             self.experiment_object = experiment
-            self.experiment_id = None
+            self.workflow_id = None
         else:
             raise ValueError("experiment argument must be int or experiment")
 
@@ -62,10 +62,10 @@ class Workflow:
         w1.submit()
         w1.cancel()
         """
-        if self.experiment_id is None:
+        if self.workflow_id is None:
             raise AttributeError("Cancel requires workflow_id")
         self.__runtime_connect()
-        self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.experiment_id))
+        self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id))
 
     def submit(self, *args, server="127.0.0.1", port="11732", checkpoint="all"):
         """
@@ -95,19 +95,19 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
 
-        self.exec_mode = "async"
+        exec_mode = self.experiment_object.exec_mode 
+        self.experiment_object.exec_mode =  "async"
 
         if checkpoint == "all":
 
             import json
 
-            if self.experiment_id is not None:
+            if self.workflow_id is not None:
                 raise AttributeError("You can't submit a workflow that was already" "submitted")
             dict_workflow = json.dumps(self.workflow_to_json())
             str_workflow = str(dict_workflow)
             self.__runtime_connect()
             self.pyophidia_client.wsubmit(str_workflow, *args)
-            self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
 
         else:
 
@@ -116,7 +116,8 @@ class Workflow:
             query += "checkpoint=" + checkpoint + ";"
             self.pyophidia_client.submit(query)
 
-        self.exec_mode = "sync"
+        self.workflow_id = self.pyophidia_client.last_jobid.split("?")[1].split("#")[0]
+        self.experiment_object.exec_mode = exec_mode
         return self.workflow_id
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
@@ -152,7 +153,7 @@ class Workflow:
                           dependencies={})
          w1 = Workflow(e1)
          w1.submit()
-         w1.monitor(frequency=100, iterative=True, visual_mode=True)
+         w1.monitor(frequency=10, iterative=True, visual_mode=True)
         """
         import graphviz
         import json
@@ -246,7 +247,7 @@ class Workflow:
                 arguments = {}
                 for j in task["arguments"]:
                     arguments[j.split("=")[0]] = j.split("=")[1]
-                task_obj = Task(name=task["name"], operator=task["operator"], arguments=arguments)
+                task_obj = Task(name=task["name"], operator=task["operator"], type=task["type"], arguments=arguments)
                 if "dependencies" in task.keys():
                     for dependency in task["dependencies"]:
                         task_obj.copyDependency(dependency)
@@ -328,9 +329,9 @@ class Workflow:
             "(?i).*SKIPPED": "yellow",
         }
         self.__runtime_connect()
-        self.pyophidia_client.submit("oph_resume id={0};".format(self.experiment_id))
+        self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
         status_response = json.loads(self.pyophidia_client.last_response)
-        self.pyophidia_client.submit("oph_resume document_type=request;level=3;id={0};".format(self.experiment_id))
+        self.pyophidia_client.submit("oph_resume document_type=request;level=3;id={0};".format(self.workflow_id))
         json_response = json.loads(self.pyophidia_client.last_response)
         tasks = _modify_task(json_response)
         sorted_tasks = _sort_tasks(tasks)
@@ -344,12 +345,12 @@ class Workflow:
                 if not re.match("(?i).*RUNNING", workflow_status) and (not re.match("(?i).*PENDING", workflow_status)):
                     return workflow_status
                 time.sleep(frequency)
-                self.pyophidia_client.submit("oph_resume id={0};".format(self.experiment_id))
+                self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
                 status_response = json.loads(self.pyophidia_client.last_response)
                 workflow_status = _check_workflow_status(status_response)
         else:
             if visual_mode is True:
-                _draw(sorted_tasks, json_response, status_color_dictionary)
+                _draw(sorted_tasks, status_response, status_color_dictionary)
                 return workflow_status
             else:
                 return workflow_status
