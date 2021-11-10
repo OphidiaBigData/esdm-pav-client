@@ -676,3 +676,54 @@ class Experiment:
                                 "subset_filter": subset_filter,
                                 "subset_type": subset_type,
                                 "timeout": timeout})
+
+    def newIfTask(self, condition, if_branch, else_branch):
+        """
+
+        Parameters
+        ----------
+        condition: str
+            The condition for the "if" statement
+        if_branch: Experiment
+            An Experiment object that will be used in order execute its tasks
+            in case the "if" statement is True.
+        else_branch: Experiment
+            An Experiment object that will be used in order execute its tasks
+            in case the "if" statement is False.
+
+        Raises
+        ------
+        AttributeError
+            If a provided argument is of wrong type or .
+
+        Returns
+        -------
+
+        """
+        self.__param_check([{"name": "condition", "value": condition,
+                             "type": str},
+                            {"name": "if_branch", "value": if_branch,
+                             "type": Experiment},
+                            {"name": "else_branch", "value": else_branch,
+                             "type": Experiment}])
+        if len(if_branch.tasks) == 0 or len(else_branch.tasks) == 0:
+            raise AttributeError("You have to add tasks to the if_branch "
+                                 "Experiment")
+        t1 = self.newTask(name="Begin selection",
+                        type="control",
+                        operator='if',
+                        arguments={"condition": condition})
+        for task in if_branch.tasks:
+            self.tasks.append(task)
+        t3 = self.newTask(name="Else",
+                        type="control",
+                        operator='else',
+                        dependencies={t1: ''})
+        for task in else_branch.tasks:
+            self.tasks.append(task)
+        t7 = self.newTask(name="End selection",
+                        type="control",
+                        operator='endif',
+                        arguments={},
+                        dependencies={if_branch.tasks[-1]: "",
+                                      else_branch.tasks[-1]: ""})
