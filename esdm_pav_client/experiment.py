@@ -332,8 +332,7 @@ class Experiment:
                         abstract="sample abstract 2")
         t1 = e2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
         task_array = e1.newSubexperiment(name="new_subexperiment",
-        experiment=e2,
-                                         params={}, dependencies=[])
+                     experiment=e2, params={}, dependencies=[])
         """
         try:
             from task import Task
@@ -450,7 +449,6 @@ class Experiment:
             all_tasks.append(new_task)
             self.addTask(new_task)
             non_leaf_tasks += [t["task"] for t in task.dependencies]
-
         return [t for t in all_tasks if t.name not in non_leaf_tasks]
 
     @staticmethod
