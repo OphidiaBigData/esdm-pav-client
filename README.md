@@ -28,6 +28,12 @@ cd esdm-pav-client
 python setup.py install
 ```
 
+*Pip* package installer can also be used within the repo folder using the following in place of the last command:
+
+``` {.sourceCode .bash}
+pip install -e .
+```
+
 Examples
 --------
 
