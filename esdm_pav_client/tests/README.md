@@ -1,28 +1,24 @@
 # HOW TO RUN
 
-In order to run the tests you have to type:
+In order to run the tests you need *pytest*
 
-`python -m pytest`
+```bash 
+pip install -U pytest
+```
+
+The you can run:
+
+```python 
+python -m pytest
+```
 
 # IMPORTANT NOTES
 
-If you plan to run the tests on localhost don't change anything.
+In case of remote execution, setup the values for server/port lines 37-42 in the "test_workflow.py" 
 
-If you plan to run the tests on the server, please provide your credentials
-on lines 35-42 of the "test_workflow.py" and uncomment those lines
-
-`w1.username = ""`
-
-`# w1.password = ""`
-
-`# w1.server = ""`
-
-`# w1.port = ""`
-
-`# w2.username = ""`
-
-`# w2.password = ""`
-
-`# w2.server = ""`
-
-`# w2.port = ""`
+```python 
+w1.server = ""
+w1.port = ""
+w2.server = ""
+w2.port = ""
+```
