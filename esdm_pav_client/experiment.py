@@ -285,7 +285,7 @@ class Experiment:
         self.addTask(t)
         return t
 
-    def newSubexperiment(self, experiment, params, dependencies={}, name=None):
+    def newSubexperiment(self, experiment, params, dependencies=[], name=None):
         """
         Embeds an ESDM PAV experiment into another experiment
 
