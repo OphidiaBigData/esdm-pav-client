@@ -11,13 +11,13 @@ e1 = Experiment(
 t2 = e1.newTask(
     name="mytask1",
     operator="oph_script",
-    arguments={"script": "/sleep.sh"},
+    arguments={"script": "sleep.sh"},
     dependencies={},
 )
 t3 = e1.newTask(
     name="mytask2",
     operator="oph_script",
-    arguments={"script": "/sleep.sh"},
+    arguments={"script": "sleep.sh"},
     dependencies={t2: None},
 )
 
