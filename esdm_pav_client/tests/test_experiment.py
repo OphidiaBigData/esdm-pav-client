@@ -1,33 +1,32 @@
-from esdm_pav_client import Task, Workflow
+from esdm_pav_client import Task, Workflow, Experiment
 import pytest
 
-"""A workflow object is being created along with some task objects for the
+"""An experiment object is being created along with some task objects for the
    testing process"""
-w1 = Workflow(
+e1 = Experiment(
     name="Sample_Workflow",
     author="Author_name",
     abstract="Example workflow for testing",
 )
-t2 = w1.newTask(
+t2 = e1.newTask(
     name="mytask1",
     operator="oph_script",
     arguments={"script": "/gfs-data/home/evachlas/sleep.sh"},
     dependencies={},
 )
-t3 = w1.newTask(
+t3 = e1.newTask(
     name="mytask2",
     operator="oph_script",
     arguments={"script": "/gfs-data/home/evachlas/sleep.sh"},
     dependencies={t2: None},
 )
-w1.submit()
 
-w2 = Workflow(
+e2 = Experiment(
     name="Sample_Workflow_template",
     author="Author_name",
     abstract="Second example workflow for testing",
 )
-t2 = w2.newTask(operator="oph_if")
+t2 = e2.newTask(operator="oph_if")
 t3 = Task(
     name="Create Container",
     operator="oph_createcontainer",
@@ -36,18 +35,18 @@ t3 = Task(
 
 
 def test_deinit():
-    w1.deinit()
+    e1.deinit()
 
 
 @pytest.mark.parametrize(("task"), [(t3), ("t3"), ([t3])])
 def test_addTask(task):
-    w1.addTask(task=task)
+    e1.addTask(task=task)
 
 
 # the first will pass
 @pytest.mark.parametrize(("taskname"), [("sample_task1"), (5), ({4: 5})])
 def test_get_task(taskname):
-    w1.getTask(taskname=taskname)
+    e1.getTask(taskname=taskname)
 
 
 # First four pass
@@ -65,7 +64,7 @@ def test_get_task(taskname):
     ],
 )
 def test_save(filename):
-    w1.save(workflowname=filename)
+    e1.save(experimentname=filename)
 
 
 # First and last pass
@@ -88,7 +87,7 @@ def test_save(filename):
     ],
 )
 def test_newTask(operator, arguments, dependencies, name):
-    w1.newTask(
+    e1.newTask(
         operator=operator,
         arguments=arguments,
         dependencies=dependencies,
@@ -101,31 +100,31 @@ def test_newTask(operator, arguments, dependencies, name):
     ("workflow", "params", "dependency", "name"),
     [
         (
-            w2,
+            e2,
             {"$oph_importnc2_container_val": "historical"},
             {},
             "new_subworkflow2",
         ),
         (
-            w2,
+            e2,
             {"$oph_importnc2_container_val": "historical"},
             [],
             "new_subworkflow3",
         ),
-        (w2, [], [], ""),
+        (e2, [], [], ""),
         ("w2", {}, {}, ""),
     ],
 )
-def test_newSubWorkflow(workflow, params, dependency, name):
-    w1.newSubWorkflow(
-        workflow=workflow, params=params, dependency=dependency, name=name
+def test_newSubExperiment(workflow, params, dependency, name):
+    e2.newSubexperiment(
+        experiment=workflow, params=params, dependencies=dependency, name=name
     )
 
 
 # only the last one will pass (you have to create a file named "file1.json")
 @pytest.mark.parametrize(("file"), [("file1"), (14), ({}), ("file1.json")])
 def test_load(file):
-    w1.load(file=file)
+    e2.load(file=file)
 
 
 # only the first must pass
@@ -143,20 +142,6 @@ def test_addDependency(task, argument):
     t3.addDependency(task=task, argument=argument)
 
 
-@pytest.mark.parametrize(
-    ("server", "port"),
-    [
-        ("sample_server", "sample_port"),
-        (None, None),
-        (1, 2),
-        ("sample_use", None),
-        ([], 0),
-    ],
-)
-def test_submit(server, port):
-    w1.submit(server=server, port=port)
-
-
 # First three should pass
 @pytest.mark.parametrize(
     ("filename", "visual"),
@@ -170,30 +155,7 @@ def test_submit(server, port):
     ],
 )
 def test_check(filename, visual):
-    w1.check(filename=filename, visual=visual)
+    e1.check(filename=filename, visual=visual)
 
 
-def test_cancel():
-    w1.cancel()
 
-
-# First five should pass
-@pytest.mark.parametrize(
-    ("frequency", "iterative", "visual_mode"),
-    [
-        (10, True, False),
-        (10, True, True),
-        (10, False, True),
-        (10, False, False),
-        (100, True, False),
-        (10, True, False),
-        ("10", True, False),
-        (10, "True", False),
-        (10, True, "False"),
-        (None, True, False),
-    ],
-)
-def test_monitor(frequency, iterative, visual_mode):
-    w1.monitor(
-        frequency=frequency, iterative=iterative, visual_mode=visual_mode
-    )
