@@ -3,7 +3,7 @@ ESDM PAV Python API and Client
 
 *esdm-pav-client* is a [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)-licensed Python package for modelling and executing a post-processing, analytics and visualisation (PAV) experiment to be executed with the ESDM PAV Runtime system.
 
-It runs on Python 3.5, 3.6 and 3.7 is pure-Python code.
+It runs on Python 3.5, 3.6, 3.7, 3.8 and 3.9 is pure-Python code.
 
 It provides 2 main modules:
 
@@ -189,6 +189,8 @@ e1.check()
 w1 = Workflow(e1)
 w1.submit()
 ```
+
+Additional examples can be found under the `examples` folder.
 
 Acknowledgement
 ---------------
