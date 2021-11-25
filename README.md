@@ -148,7 +148,7 @@ $prefix/esdm-pav-client -w example.json 2 -m
 To cancel a running PAV experiment document on the ESDM PAV runtime:
 
 ``` {.sourceCode .bash}
-$prefix/esdm-pav-client -c <workflow_id>
+$prefix/esdm-pav-client -c -i <workflow_id>
 ```
 
 A full experiment example
