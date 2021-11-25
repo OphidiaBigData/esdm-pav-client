@@ -26,8 +26,20 @@ def print_help():
     )
 )
 @click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
-@click.option("-S", "--server", help="ESDM PAV Runtime address", default="127.0.0.1")
-@click.option("-P", "--port", help="ESDM PAV Runtime port", default="11732")
+@click.option(
+    "-S",
+    "--server",
+    help="ESDM PAV Runtime address (used in case of remote submission)",
+    default="127.0.0.1",
+    metavar="<IP address>",
+)
+@click.option(
+    "-P",
+    "--port",
+    help="ESDM PAV Runtime port (used in case of remote submission)",
+    default="11732",
+    metavar="<port number>",
+)
 @click.option(
     "-m",
     "--monitor",
@@ -44,17 +56,32 @@ def print_help():
     "-c",
     "--cancel",
     help="Cancel the experiment execution. It only works in asynchronous mode",
-    type=int,
+    is_flag=True,
 )
 # @click.argument("workflow", type=click.UNPROCESSED)
 @click.option(
+    "-i",
+    "--id",
+    help="Id of a running/completed/failed workflow to cancel/monitor/restart",
+    type=int,
+    metavar="<id>",
+)
+@click.option(
     "-w",
     "--workflow",
-    help="Will run the specified experiment workflow.",
+    help="Will run the experiment workflow from the provided PAV document (JSON file)",
     type=str,
+    metavar="<JSON document>",
+)
+@click.option(
+    "-p",
+    "--checkpoint",
+    help="The checkpoint used to restart the workflow",
+    type=str,
+    metavar="<checkpoint name>",
 )
 @click.argument("workflow_args", nargs=-1, type=click.UNPROCESSED)
-def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args):
+def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args, id, checkpoint):
     """Command Line Interface to run an ESDM PAV experiment workflow\n
     Example: esdm-pav-client -w experiment.json 1 2"""
 
@@ -94,7 +121,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
             if monitor:
-                w1.monitor()
+                w1.monitor(frequency=5, iterative=True, visual_mode=True)
         else:
             verbose_check_display(
                 verbose,
@@ -105,16 +132,74 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
                 True,
                 "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
             )
-            w1.monitor()
+            w1.monitor(frequency=5, iterative=True, visual_mode=True)
+        return 0
     elif cancel:
-        if not sync_mode:
+        if not id:
+            verbose = True
             verbose_check_display(
                 verbose,
-                "Will cancel the experiment workflow execution: {0}".format(str(cancel)),
+                "ID of workflow to be cancelled is required",
             )
-            w1 = Workflow(cancel)
+            return 1
+        else:
+            verbose_check_display(
+                verbose,
+                "Will cancel the experiment workflow execution: {0}".format(str(id)),
+            )
+            w1 = Workflow(id)
             w1.cancel()
-            return
+            return 0
+    elif monitor:
+        if not id:
+            verbose = True
+            verbose_check_display(
+                verbose,
+                "ID of workflow to be monitored is required",
+            )
+            return 1
+        else:
+            verbose_check_display(
+                verbose,
+                "Will monitor the experiment workflow execution: {0}".format(str(id)),
+            )
+            w1 = Workflow(id)
+            w1.monitor(frequency=5, iterative=True, visual_mode=True)
+            return 0
+    elif checkpoint:
+        if not id:
+            verbose = True
+            verbose_check_display(
+                verbose,
+                "ID of workflow to be restarted from checkpoint is required",
+            )
+            return 1
+        w1 = Workflow(id)
+        if not sync_mode:
+            e1.exec_mode = "sync"
+            verbose_check_display(
+                verbose,
+                "Submitting the experiment workflow in synchronous mode",
+            )
+            w1.submit(server=server, port=port, *args, checkpoint=checkpoint)
+            verbose_check_display(
+                True,
+                "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
+            )
+            if monitor:
+                w1.monitor(frequency=5, iterative=True, visual_mode=True)
+        else:
+            verbose_check_display(
+                verbose,
+                "Submitting the experiment workflow in asynchronous mode",
+            )
+            w1.submit(server=server, port=port, *args, checkpoint=checkpoint)
+            verbose_check_display(
+                True,
+                "Submitted! Workflow id = {0}".format((str(w1.workflow_id))),
+            )
+            w1.monitor(frequency=5, iterative=True, visual_mode=True)
+        return 0
     else:
         print_help()
 
