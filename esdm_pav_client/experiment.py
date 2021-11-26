@@ -673,6 +673,8 @@ class Experiment:
 
         Returns
         -------
+        last_Task : <class 'esdm_pav_client.task.Task'>
+            Returns the last task so it can be used as a dependency
 
         """
         self.__param_check(
@@ -711,7 +713,7 @@ class Experiment:
                                 "subset_type": subset_type,
                                 "timeout": timeout})
 
-    def newIfTask(self, condition, if_branch, else_branch):
+    def newIfTask(self, condition, if_branch, else_branch, dependency=None):
         """
         Parameters
         ----------
@@ -733,19 +735,31 @@ class Experiment:
         -------
 
         """
+        from task import Task
         self.__param_check([{"name": "condition", "value": condition,
                              "type": str},
                             {"name": "if_branch", "value": if_branch,
                              "type": Experiment},
                             {"name": "else_branch", "value": else_branch,
-                             "type": Experiment}])
+                             "type": Experiment},
+                            {"name": "dependencies",
+                             "value": dependency,
+                             "type": Task, "NoneValue": True}
+                                    ])
         if len(if_branch.tasks) == 0 or len(else_branch.tasks) == 0:
             raise AttributeError("You have to add tasks to the if_branch "
                                  "Experiment")
-        t1 = self.newTask(name="Begin selection",
-                          type="control",
-                          operator='if',
-                          arguments={"condition": condition})
+        if dependency:
+            t1 = self.newTask(name="Begin selection",
+                              type="control",
+                              operator='if',
+                              arguments={"condition": condition},
+                              dependencies={dependency: None})
+        else:
+            t1 = self.newTask(name="Begin selection",
+                              type="control",
+                              operator='if',
+                              arguments={"condition": condition})
         for task in if_branch.tasks:
             self.tasks.append(task)
         t3 = self.newTask(name="Else",
@@ -754,15 +768,16 @@ class Experiment:
                           dependencies={t1: ''})
         for task in else_branch.tasks:
             self.tasks.append(task)
-        t7 = self.newTask(name="End selection",
+        last_task = self.newTask(name="End selection",
                           type="control",
                           operator='endif',
                           arguments={},
                           dependencies={if_branch.tasks[-1]: "",
                                         else_branch.tasks[-1]: ""})
+        return last_task
 
     def newForTask(self, name="loop", index_values="$1", parallel="yes",
-                   iteration_branch=None):
+                   iteration_branch=None, dependency=None):
         """
         Parameters
         ----------
@@ -784,8 +799,11 @@ class Experiment:
 
         Returns
         -------
+        last_Task : <class 'esdm_pav_client.task.Task'>
+            Returns the last task so it can be used as a dependency
 
         """
+        from task import Task
         self.__param_check([{"name": "name", "value": name,
                              "type": str},
                             {"name": "index_values", "value": index_values,
@@ -794,20 +812,32 @@ class Experiment:
                              "type": str},
                             {"name": "iteration_branch",
                              "value": iteration_branch,
-                             "type": Experiment}
+                             "type": Experiment},
+                            {"name": "dependencies",
+                             "value": dependency,
+                             "type": Task, "NoneValue": True}
                             ])
         if len(iteration_branch.tasks) == 0:
             raise AttributeError("You have to add tasks to the "
                                  "iteration_branch Experiment")
-        self.newTask(name=name,
-                     type="control",
-                     operator='for',
-                     arguments={"key": "index", "values": index_values,
-                                "parallel": parallel})
+        if dependency:
+            self.newTask(name=name,
+                         type="control",
+                         operator='for',
+                         arguments={"key": "index", "values": index_values,
+                                    "parallel": parallel},
+                         dependencies={dependency: None})
+        else:
+            self.newTask(name=name,
+                         type="control",
+                         operator='for',
+                         arguments={"key": "index", "values": index_values,
+                                    "parallel": parallel})
         for task in iteration_branch.tasks:
             self.tasks.append(task)
-        self.newTask(name="End loop",
+        last_task = self.newTask(name="End loop",
                      type="control",
                      operator='endfor',
                      arguments={},
                      dependencies={iteration_branch.tasks[-1]: 'cube'})
+        return last_task
