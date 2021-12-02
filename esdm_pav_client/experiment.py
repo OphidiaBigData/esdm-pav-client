@@ -725,6 +725,9 @@ class Experiment:
         else_branch: Experiment
             An Experiment object that will be used in order execute its tasks
             in case the "if" statement is False.
+        dependency: Dict
+            Use the dependency parameter in order to choose the depdnencies
+            that will be added to the first task.
 
         Raises
         ------
@@ -744,17 +747,20 @@ class Experiment:
                              "type": Experiment},
                             {"name": "dependencies",
                              "value": dependency,
-                             "type": Task, "NoneValue": True}
+                             "type": dict, "NoneValue": True}
                                     ])
         if len(if_branch.tasks) == 0 or len(else_branch.tasks) == 0:
             raise AttributeError("You have to add tasks to the if_branch "
                                  "Experiment")
         if dependency:
+            for k in dependency.keys():
+                self.__param_check([{"name": "Dependency Task", "value": k,
+                                     "type": Task}])
             t1 = self.newTask(name="Begin selection",
                               type="control",
                               operator='if',
                               arguments={"condition": condition},
-                              dependencies={dependency: None})
+                              dependencies=dependency)
         else:
             t1 = self.newTask(name="Begin selection",
                               type="control",
@@ -791,6 +797,9 @@ class Experiment:
         iteration_branch: Experiment
             An Experiment object that will be used in order execute its tasks
             inside the for loop.
+        dependency: Dict
+            Use the dependency parameter in order to choose the depdnencies
+            that will be added to the first task.
 
         Raises
         ------
@@ -815,18 +824,22 @@ class Experiment:
                              "type": Experiment},
                             {"name": "dependencies",
                              "value": dependency,
-                             "type": Task, "NoneValue": True}
+                             "type": dict, "NoneValue": True}
                             ])
+
         if len(iteration_branch.tasks) == 0:
             raise AttributeError("You have to add tasks to the "
                                  "iteration_branch Experiment")
         if dependency:
+            for k in dependency.keys():
+                self.__param_check([{"name": "Dependency Task", "value": k,
+                                     "type": Task}])
             self.newTask(name=name,
                          type="control",
                          operator='for',
                          arguments={"key": "index", "values": index_values,
                                     "parallel": parallel},
-                         dependencies={dependency: None})
+                         dependencies=dependency)
         else:
             self.newTask(name=name,
                          type="control",
