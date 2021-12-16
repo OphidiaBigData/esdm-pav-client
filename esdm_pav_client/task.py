@@ -1,6 +1,6 @@
 class Task:
     """
-    Creates a Task object that can be embedded in a ESDM PAV experiment
+    Creates a Task object that can be embedded in a ESDM-PAV experiment
     workflow
 
     Construction::
@@ -17,8 +17,6 @@ class Task:
         unique task name
     type : str, optional
         type of the task
-    run : str, optional
-        enable actual execution, yes or no
     on_error : str, optional
         behaviour in case of error
     """

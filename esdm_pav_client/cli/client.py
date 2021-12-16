@@ -25,18 +25,18 @@ def print_help():
         ignore_unknown_options=True,
     )
 )
-@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
+@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages")
 @click.option(
     "-S",
     "--server",
-    help="ESDM PAV Runtime address (used in case of remote submission)",
+    help="ESDM-PAV Runtime address (used in case of remote submission)",
     default="127.0.0.1",
     metavar="<IP address>",
 )
 @click.option(
     "-P",
     "--port",
-    help="ESDM PAV Runtime port (used in case of remote submission)",
+    help="ESDM-PAV Runtime port (used in case of remote submission)",
     default="11732",
     metavar="<port number>",
 )
@@ -62,7 +62,7 @@ def print_help():
 @click.option(
     "-i",
     "--id",
-    help="Id of a running/completed/failed workflow to cancel/monitor/restart",
+    help="Id of a running/completed/failed experiment workflow to cancel/monitor/restart",
     type=int,
     metavar="<id>",
 )
@@ -76,13 +76,13 @@ def print_help():
 @click.option(
     "-p",
     "--checkpoint",
-    help="The checkpoint used to restart the workflow",
+    help="The checkpoint used to restart the experiment workflow",
     type=str,
     metavar="<checkpoint name>",
 )
 @click.argument("workflow_args", nargs=-1, type=click.UNPROCESSED)
 def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_args, id, checkpoint):
-    """Command Line Interface to run an ESDM PAV experiment workflow\n
+    """Command Line Interface to run an ESDM-PAV experiment\n
     Example: esdm-pav-client -w experiment.json 1 2"""
 
     def modify_args(workflow, server, port):
@@ -106,7 +106,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
     if workflow:
         workflow, server, port = modify_args(workflow, server, port)
         args = extract_other_args(workflow_args)
-        verbose_check_display(verbose, "Reading the experiment workflow")
+        verbose_check_display(verbose, "Reading the PAV experiment document")
         e1 = Experiment.load(workflow)
         w1 = Workflow(e1)
         if not sync_mode:
@@ -139,7 +139,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             verbose = True
             verbose_check_display(
                 verbose,
-                "ID of workflow to be cancelled is required",
+                "Id of the experiment workflow to be cancelled is required",
             )
             return 1
         else:
@@ -155,7 +155,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             verbose = True
             verbose_check_display(
                 verbose,
-                "ID of workflow to be monitored is required",
+                "Id of the experiment workflow to be monitored is required",
             )
             return 1
         else:
@@ -171,7 +171,7 @@ def run(verbose, server, port, monitor, sync_mode, cancel, workflow, workflow_ar
             verbose = True
             verbose_check_display(
                 verbose,
-                "ID of workflow to be restarted from checkpoint is required",
+                "Id of the experiment workflow to be restarted from checkpoint is required",
             )
             return 1
         w1 = Workflow(id)

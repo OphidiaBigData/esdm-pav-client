@@ -1,13 +1,13 @@
-ESDM PAV Python API and Client
+ESDM-PAV Python API and Client
 ==============================
 
-*esdm-pav-client* is a [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)-licensed Python package for modelling and executing a post-processing, analytics and visualisation (PAV) experiment to be executed with the ESDM PAV Runtime system.
+*esdm-pav-client* is a [GPLv3](http://www.gnu.org/licenses/gpl-3.0.txt)-licensed Python package for modelling and executing a post-processing, analytics and visualisation (PAV) experiment to be executed with the [ESDM-PAV Runtime system](https://github.com/OphidiaBigData/esdm-pav-runtime).
 
-It runs on Python 3.5, 3.6, 3.7, 3.8 and 3.9 is pure-Python code.
+It runs on Python 3.6, 3.7, 3.8 and 3.9 is pure-Python code.
 
 It provides 2 main modules:
 
--   An API for creating and submitting PAV experiments: *Workflow* and *Task* Python classes;
+-   An API for creating and submitting PAV experiments: *Workflow*, *Experiment* and *Task* Python classes;
 -   A CLI for PAV documents submission: a Python-based client called *esdm-pav-client*.
 
 Dependencies
@@ -37,7 +37,7 @@ pip install -e .
 Examples
 --------
 
-#### Create a ESDM PAV experiment
+#### Create a PAV experiment
 
 Create a simple PAV experiment consisting of a single task (an Ophidia operator):
 
@@ -45,7 +45,7 @@ Create a simple PAV experiment consisting of a single task (an Ophidia operator)
 from esdm_pav_client import Experiment
 
 e1 = Experiment(name="Sample experiment", author="sample author",
-              abstract='Example ESDM PAV workflow')
+              abstract='Example ESDM-PAV workflow')
 t1 = e1.newTask(name="Sample task", type="ophidia", operator="oph_list", 
               on_error="skip", arguments={"level": "2"})
 ```
@@ -70,25 +70,25 @@ t2 = e1.newTask(name="Sample task 2", type="ophidia", operator='oph_createcontai
                 dependencies={t1: None})
 ```
 
-#### Save a ESDM PAV experiment document
+#### Save a PAV experiment document
 
-Save the ESDM PAV experiment as JSON document
+Save the PAV experiment as JSON document
 
 ``` {.sourceCode .python}
 e1.save("example.json")
 ```
 
-#### Validate a ESDM PAV experiment document
+#### Validate a PAV experiment document
 
-Validate the ESDM PAV experiment document before the submission
+Validate the PAV experiment document before the submission
 
 ``` {.sourceCode .python}
 e1.check()
 ```
 
-#### Submit a ESDM PAV experiment for execution
+#### Submit a PAV experiment for execution
 
-Submit the experiment created for execution on the ESDM PAV runtime
+Submit the experiment created for execution on the ESDM-PAV runtime
 
 ``` {.sourceCode .python}
 from esdm_pav_client import Workflow, Experiment
@@ -96,23 +96,23 @@ w1 = Workflow(e1)
 w1.submit("2")
 ```
 
-#### Monitor a running ESDM PAV experiment
+#### Monitor a running PAV experiment
 
-Monitor the running experiment on the ESDM PAV runtime. The visual mode argument shows a graphical view of the experiment execution status
+Monitor the running experiment on the ESDM-PAV runtime. The visual mode argument shows a graphical view of the experiment execution status
 
 ``` {.sourceCode .python}
 w1.monitor(visual_mode=True)
 ```
 
-#### Cancel a ESDM PAV experiment
+#### Cancel a PAV experiment
 
-Cancel the experiment on the ESDM PAV runtime.
+Cancel the experiment execution on the ESDM-PAV runtime.
 
 ``` {.sourceCode .python}
 w1.cancel()
 ```
 
-#### Load a ESDM PAV experiment document
+#### Load a PAV experiment document
 
 Load a PAV experiment from the JSON document
 
@@ -122,7 +122,7 @@ e1 = Experiment.load("example.json")
 
 #### Additional information on the methods
 
-Docstrings are available for all the Workflow, Experiment and Task classes. To get additional information run:
+Docstrings are available for the Workflow, Experiment and Task classes. To get additional information run:
 
 ``` {.sourceCode .python}
 from esdm_pav_client import Workflow, Experiment, Task
@@ -131,21 +131,21 @@ help(Experiment)
 help(Task)
 ```
 
-#### Run a ESDM PAV experiment with the CLI
+#### Run a PAV experiment with the CLI
 
-To submit the execution of a PAV experiment document on the ESDM PAV runtime:
+To submit the execution of a PAV experiment document on the ESDM-PAV runtime:
 
 ``` {.sourceCode .bash}
 $prefix/esdm-pav-client -w example.json 2
 ```
 
-To monitor the execution of a running PAV experiment document on the ESDM PAV runtime:
+To submit a PAV experiment and monitor its execution on the ESDM-PAV runtime:
 
 ``` {.sourceCode .bash}
 $prefix/esdm-pav-client -w example.json 2 -m
 ```
 
-To cancel a running PAV experiment document on the ESDM PAV runtime:
+To cancel a running PAV experiment on the ESDM-PAV runtime:
 
 ``` {.sourceCode .bash}
 $prefix/esdm-pav-client -c -i <workflow_id>
@@ -159,7 +159,7 @@ The following code show a full PAV experiment composed of CDO tasks, the command
 ``` {.sourceCode .python}
 from esdm_pav_client import Workflow, Experiment, Task
  
-e1 = Experiment(name="CDO PAV experiment example",
+e1 = Experiment(name="CDO-based PAV experiment example",
           author="ESiWACE2",
           abstract="Example of PAV experiment with CDO")
 t1 = e1.newTask(name="Regrid",

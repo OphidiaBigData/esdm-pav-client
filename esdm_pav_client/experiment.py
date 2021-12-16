@@ -1,6 +1,6 @@
 class Experiment:
     """
-    Creates or loads an ESDM PAV experiment.
+    Creates or loads an ESDM-PAV experiment.
 
     An experiment is a sequence of tasks. Each task can be either independent
     or dependent on other tasks, for instance it processes the output of other
@@ -14,19 +14,17 @@ class Experiment:
     Parameters
     ----------
     name: str
-        ESDM PAV experiment name
+        PAV experiment name
     author: str, optional
-        ESDM PAV experiment author
+        PAV experiment author
     abstract: str, optional
-        ESDM PAV experiment description
+        PAV experiment description
     on_error: str, optional
         behaviour in case of error
     run: str, optional
         enable actual execution, yes or no
     nthreads: str, optional
         number of threads
-    ncores: int, optional
-        number of cores
 
     """
 
@@ -106,11 +104,12 @@ class Experiment:
                     raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
-        non_experiment_fields = [
-            "pyophidia_client",
-            "task_name_counter"
-        ]
-        new_experiment = {k: dict(self.__dict__)[k] for k in dict(self.__dict__).keys() if k not in non_experiment_fields}
+        non_experiment_fields = ["pyophidia_client", "task_name_counter"]
+        new_experiment = {
+            k: dict(self.__dict__)[k]
+            for k in dict(self.__dict__).keys()
+            if k not in non_experiment_fields
+        }
         if "tasks" in new_experiment.keys():
             new_experiment["tasks"] = [t.__dict__ for t in new_experiment["tasks"]]
         return new_experiment
@@ -124,7 +123,7 @@ class Experiment:
 
     def addTask(self, task):
         """
-        Adds a task to the ESDM PAV experiment
+        Adds a task to the ESDM-PAV experiment
 
         Parameters
         ----------
@@ -156,7 +155,7 @@ class Experiment:
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV experiment the
+        Retrieve from the ESDM-PAV experiment the
         esdm_pav_client.task.Task object with the given task name
 
         Parameters
@@ -185,12 +184,12 @@ class Experiment:
 
     def save(self, experimentname):
         """
-        Save the ESDM PAV experiment as a JSON document
+        Save the ESDM-PAV experiment as a JSON document
 
         Parameters
         ----------
         experimentname : str
-            The path to the ESDM PAV document file where the experiment is being
+            The path to the PAV document file where the experiment is being
             saved
 
         Example
@@ -220,7 +219,7 @@ class Experiment:
 
     def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
         """
-        Adds a new Task in the ESDM PAV experiment without the need
+        Adds a new Task in the ESDM-PAV experiment without the need
         of creating a esdm_pav_client.task.Task object
 
         Attributes
@@ -287,7 +286,7 @@ class Experiment:
 
     def newSubexperiment(self, experiment, params, dependencies=[], name=None):
         """
-        Embeds an ESDM PAV experiment into another experiment
+        Embeds an ESDM-PAV experiment into another experiment
 
         Parameters
         ----------
@@ -436,12 +435,12 @@ class Experiment:
     @staticmethod
     def load(file):
         """
-        Load a ESDM PAV experiment from the JSON document
+        Load a ESDM-PAV experiment from the JSON document
 
         Parameters
         ----------
         file : str
-            The name of the ESDM PAV document file to be loaded
+            The path/name of the PAV document file to be loaded
 
         Returns
         -------
@@ -494,7 +493,9 @@ class Experiment:
                     name=d["name"],
                     arguments={a.split("=")[0]: a.split("=")[1] for a in d["arguments"]},
                 )
-                new_task.__dict__.update({k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"})
+                new_task.__dict__.update(
+                    {k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"}
+                )
                 experiment.addTask(new_task)
             return experiment
 
@@ -505,8 +506,8 @@ class Experiment:
 
     def check(self, filename="sample.dot", visual=True):
         """
-        Perform a ESDM PAV experiment validity check and display the
-        graph of the experiment
+        Check the ESDM-PAV experiment definition validity and display the
+        graph of the experiment structure
 
         Parameters
         ----------
@@ -532,10 +533,18 @@ class Experiment:
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
-            subgraphs_list = [{"start_index": start_index, "operator": "if"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]]
-            subgraphs_list += [{"start_index": start_index, "operator": "for"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]]
+            subgraphs_list = [
+                {"start_index": start_index, "operator": "if"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]
+            ]
+            subgraphs_list += [
+                {"start_index": start_index, "operator": "for"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]
+            ]
             subgraphs_list = sorted(subgraphs_list, key=lambda i: i["start_index"])
-            closing_indexes = sorted([i for i, t in enumerate(list_of_operators) if t == "endfor" or t == "endif"])[::-1]
+            closing_indexes = sorted(
+                [i for i, t in enumerate(list_of_operators) if t == "endfor" or t == "endif"]
+            )[::-1]
             for i in range(0, len(subgraphs_list)):
                 subgraphs_list[i]["end_index"] = closing_indexes[i]
 
@@ -546,7 +555,11 @@ class Experiment:
                     new_dot.attr("node")
                     new_dot.node(
                         tasks[i].name,
-                        _trim_text(tasks[i].name) + "\n" + _trim_text(tasks[i].type) + "\n" + _trim_text(tasks[i].operator),
+                        _trim_text(tasks[i].name)
+                        + "\n"
+                        + _trim_text(tasks[i].type)
+                        + "\n"
+                        + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -556,7 +569,9 @@ class Experiment:
             import json
 
             self.__runtime_connect()
-            experiment_validity = self.pyophidia_client.wisvalid(json.dumps(self.wokrflow_to_json()))
+            experiment_validity = self.pyophidia_client.wisvalid(
+                json.dumps(self.wokrflow_to_json())
+            )
             if experiment_validity[1] == "experiment is valid":
                 return True
             else:
@@ -583,7 +598,11 @@ class Experiment:
                 dot.attr("node", shape="hexagon")
             dot.node(
                 task.name,
-                _trim_text(task.name) + "\n" + _trim_text(task.type) + "\n" + _trim_text(task.operator),
+                _trim_text(task.name)
+                + "\n"
+                + _trim_text(task.type)
+                + "\n"
+                + _trim_text(task.operator),
             )
             dot.attr("edge", style="solid")
             for d in task.dependencies:
