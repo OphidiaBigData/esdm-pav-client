@@ -157,4 +157,3 @@ def test_addDependency(task, argument):
 def test_check(filename, visual):
     e1.check(filename=filename, visual=visual)
 
-
