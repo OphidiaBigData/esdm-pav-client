@@ -12,6 +12,17 @@ v1.4.0 - 2021-12-16
   - Improvements to usability by moving the experiment modelling methods to a new Experiment class
   - Changes to support the latest experiment document version
 
+v1.2.0 - 2021-06-25
+-------------------
+
+- This version includes:
+
+  - Changes to support the extensions to the experiment document JSON schema (e.g., new 'control' type)
+  - Support for integration with Jupyter Notebooks
+  - New method in Workflow class to visually monitor the experiment workflow execution
+  - New method in Workflow class to cancel the experiment workflow execution
+  - New method in Workflow class to visually check the experiment structure
+  - Changes to the client module to support monitoring and cancelling 
 
 v1.0.0 - 2020-10-01
 -------------------

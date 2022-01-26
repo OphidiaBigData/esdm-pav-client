@@ -12,7 +12,7 @@ def read(*paths):
 
 setup(
     name='esdm-pav-client',
-    version='1.2.0',
+    version='1.4.0',
     description='Python API and Client for the ESDM PAV runtime',
     long_description=(read('README.md') + '\n\n'),
     url='https://github.com/OphidiaBigData/esdm-pav-client',
@@ -27,9 +27,10 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Scientific/Engineering',
         #'Private :: Do Not Upload',

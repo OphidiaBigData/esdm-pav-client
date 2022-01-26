@@ -1,6 +1,6 @@
 class Workflow:
     """
-    Submits, cancels, or monitors an experiment object.
+    Submits, cancels and monitors a ESDM-PAV experiment execution (a workflow)
 
     Construction::
     w1 = Workflow(experiment=e1)
@@ -8,6 +8,7 @@ class Workflow:
     Parameters
     ----------
     experiment: int or <class 'esdm_pav_client.experiment.Experiment'>
+        Id of a running experiment or Experiment object
 
     Raises
     ------
@@ -47,7 +48,7 @@ class Workflow:
 
     def cancel(self):
         """
-        Cancel the ESDM PAV experiment that has been submitted
+        Cancel the running PAV experiment
 
         Returns
         -------
@@ -65,18 +66,20 @@ class Workflow:
         if self.workflow_id is None:
             raise AttributeError("Cancel requires workflow_id")
         self.__runtime_connect()
-        self.pyophidia_client.submit(query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id))
+        self.pyophidia_client.submit(
+            query="oph_cancel id={0};exec_mode=async;".format(self.workflow_id)
+        )
 
     def submit(self, *args, server="127.0.0.1", port="11732", checkpoint="all"):
         """
-        Submit an entire ESDM PAV experiment.
+        Submit the PAV experiment on the ESDM-PAV runtime
 
         Parameters
         ----------
         server : str, optional
-            ESDM PAV runtime DNS/IP address
+            ESDM-PAV runtime DNS/IP address
         port : str, optional
-            ESDM PAV runtime port
+            ESDM-PAV runtime port
         args : list
             list of arguments to be substituted in the workflow
         checkpoint : str, optional
@@ -95,8 +98,8 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
 
-        exec_mode = self.experiment_object.exec_mode 
-        self.experiment_object.exec_mode =  "async"
+        exec_mode = self.experiment_object.exec_mode
+        self.experiment_object.exec_mode = "async"
 
         if checkpoint == "all":
 
@@ -122,7 +125,7 @@ class Workflow:
 
     def monitor(self, frequency=10, iterative=True, visual_mode=True):
         """
-        Monitors the progress of the ESDM PAV experiment execution
+        Monitors the progress of the PAV experiment execution
 
         Parameters
         ----------
@@ -178,10 +181,22 @@ class Workflow:
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
-            subgraphs_list = [{"start_index": start_index, "operator": "if"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]]
-            subgraphs_list += [{"start_index": start_index, "operator": "for"} for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]]
+            subgraphs_list = [
+                {"start_index": start_index, "operator": "if"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]
+            ]
+            subgraphs_list += [
+                {"start_index": start_index, "operator": "for"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]
+            ]
             subgraphs_list = sorted(subgraphs_list, key=lambda i: i["start_index"])
-            closing_indexes = sorted([i for i, t in enumerate(list_of_operators) if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)])[::-1]
+            closing_indexes = sorted(
+                [
+                    i
+                    for i, t in enumerate(list_of_operators)
+                    if re.match("(?i).*endfor", t) or re.match("(?i).*endif", t)
+                ]
+            )[::-1]
             for i in range(0, len(subgraphs_list)):
                 subgraphs_list[i]["end_index"] = closing_indexes[i]
 
@@ -192,7 +207,11 @@ class Workflow:
                     new_dot.attr("node")
                     new_dot.node(
                         tasks[i].name,
-                        _trim_text(tasks[i].name) + "\n" + _trim_text(tasks[i].type) + "\n" + _trim_text(tasks[i].operator),
+                        _trim_text(tasks[i].name)
+                        + "\n"
+                        + _trim_text(tasks[i].type)
+                        + "\n"
+                        + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -223,9 +242,15 @@ class Workflow:
             sorted_tasks = []
             for i in range(0, len(tasks)):
                 if re.findall(r".*?(\([0-9].*\))", tasks[i].name):
-                    clean_name = tasks[i].name.replace(re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], "")
+                    clean_name = tasks[i].name.replace(
+                        re.findall(r".*?(\([0-9].*\))", tasks[i].name)[0], ""
+                    )
                     for task in tasks[i:]:
-                        if clean_name in task.name and task.name not in [t.name for t in sorted_tasks] and re.findall(r".*?(\([0-9].*\))", task.name):
+                        if (
+                            clean_name in task.name
+                            and task.name not in [t.name for t in sorted_tasks]
+                            and re.findall(r".*?(\([0-9].*\))", task.name)
+                        ):
                             sorted_tasks.append(task)
                 else:
                     sorted_tasks.append(tasks[i])
@@ -247,7 +272,12 @@ class Workflow:
                 arguments = {}
                 for j in task["arguments"]:
                     arguments[j.split("=")[0]] = j.split("=")[1]
-                task_obj = Task(name=task["name"], operator=task["operator"], type=task["type"], arguments=arguments)
+                task_obj = Task(
+                    name=task["name"],
+                    operator=task["operator"],
+                    type=task["type"],
+                    arguments=arguments,
+                )
                 if "dependencies" in task.keys():
                     for dependency in task["dependencies"]:
                         task_obj.copyDependency(dependency)
@@ -287,7 +317,11 @@ class Workflow:
                     dot.attr("node", shape="hexagon")
                 dot.node(
                     task.name,
-                    _trim_text(task.name) + "\n" + _trim_text(task.type) + "\n" + _trim_text(task.operator),
+                    _trim_text(task.name)
+                    + "\n"
+                    + _trim_text(task.type)
+                    + "\n"
+                    + _trim_text(task.operator),
                 )
                 dot.attr("edge", style="solid")
                 for d in task.dependencies:
@@ -331,7 +365,9 @@ class Workflow:
         self.__runtime_connect()
         self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
         status_response = json.loads(self.pyophidia_client.last_response)
-        self.pyophidia_client.submit("oph_resume document_type=request;level=3;id={0};".format(self.workflow_id))
+        self.pyophidia_client.submit(
+            "oph_resume document_type=request;level=3;id={0};".format(self.workflow_id)
+        )
         json_response = json.loads(self.pyophidia_client.last_response)
         tasks = _modify_task(json_response)
         sorted_tasks = _sort_tasks(tasks)
@@ -342,7 +378,9 @@ class Workflow:
                     _draw(sorted_tasks, status_response, status_color_dictionary)
                 else:
                     print(workflow_status)
-                if not re.match("(?i).*RUNNING", workflow_status) and (not re.match("(?i).*PENDING", workflow_status)):
+                if not re.match("(?i).*RUNNING", workflow_status) and (
+                    not re.match("(?i).*PENDING", workflow_status)
+                ):
                     return workflow_status
                 time.sleep(frequency)
                 self.pyophidia_client.submit("oph_resume id={0};".format(self.workflow_id))
@@ -384,7 +422,11 @@ class Workflow:
             "workflow_id",
         ]
 
-        new_workflow = {k: dict(self.experiment_object.__dict__)[k] for k in dict(self.experiment_object.__dict__).keys() if k not in non_workflow_fields}
+        new_workflow = {
+            k: dict(self.experiment_object.__dict__)[k]
+            for k in dict(self.experiment_object.__dict__).keys()
+            if k not in non_workflow_fields
+        }
         if "tasks" in new_workflow.keys():
             new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
         return new_workflow
