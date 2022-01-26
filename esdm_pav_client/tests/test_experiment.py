@@ -37,21 +37,19 @@ t3 = Task(
 def test_deinit():
     e1.deinit()
 
-@pytest.mark.skip(reason="no way of currently testing this")
+
 @pytest.mark.parametrize(("task"), [(t3), ("t3"), ([t3])])
 def test_addTask(task):
     e1.addTask(task=task)
 
 
 # the first will pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(("taskname"), [("sample_task1"), (5), ({4: 5})])
 def test_get_task(taskname):
     e1.getTask(taskname=taskname)
 
 
 # First four pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("filename"),
     [
@@ -70,7 +68,6 @@ def test_save(filename):
 
 
 # First and last pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("operator", "arguments", "dependencies", "name"),
     [
@@ -99,7 +96,6 @@ def test_newTask(operator, arguments, dependencies, name):
 
 
 # first must pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("workflow", "params", "dependency", "name"),
     [
@@ -126,7 +122,6 @@ def test_newSubExperiment(workflow, params, dependency, name):
 
 
 # only the last one will pass (you have to create a file named "file1.json")
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(("file"), [("file1"), (14), ({}), ("file1.json")])
 def test_load(file):
     e2.load(file=file)
@@ -148,7 +143,6 @@ def test_addDependency(task, argument):
 
 
 # First three should pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("filename", "visual"),
     [
@@ -163,47 +157,4 @@ def test_addDependency(task, argument):
 def test_check(filename, visual):
     e1.check(filename=filename, visual=visual)
 
-# First two should pass
-@pytest.mark.parametrize(
-    ("name", "index_values", "parallel", "iteration_branch", "dependency"),
-    [
-        ("sample_name", "$1", "yes", e2, None),
-        ("sample_name", "$1", "yes", e2, {t3: None}),
-        ("sample_name", "$1", "yes", e2, "t3"),
-        ("sample_name", "$1", "yes", "e2", None),
-        ("sample_name", 1, True, e2, None),
-        (None, "$1", "yes", e2, None),
-        (t3, "$1", None, e2, t3),
-        ("sample_name", "$1", None, e2, None),
-        ("sample_name", "$1", "yes", None, None),
-        ("sample_name", "$1", "yes", [t3], None),
-        ("sample_name", "$1", "yes", False, None),
-        ("sample_name", "$1", False, e2, None),
-        ("sample_name", "$1", "yes", e2, False),
-        (None, None, None, None, None),
 
-    ]
-)
-def test_newForTask(name, index_values, parallel, iteration_branch,
-                    dependency):
-    e1.newForTask(name=name, index_values=index_values, parallel=parallel,
-               iteration_branch=iteration_branch, dependency=dependency)
-
-# The first one should pass
-@pytest.mark.parametrize(
-    ("condition", "if_branch", "else_branch", "dependency"),
-    [
-        ("$1", e2, e2, {t2: None}),
-        ("$1", e2, "e2", None),
-        ("$1", e2, None, t2),
-        (1, e2, e2, None),
-        ("$1", None, e2, None),
-        ("$1", e2, e2, "None"),
-        ("$1", e2, False, False),
-        ("$1", "e2", e2, None),
-        (None, e2, e2, None),
-    ]
-)
-def test_newIfTask(condition, if_branch, else_branch, dependency):
-    e1.newIfTask(condition=condition, if_branch=if_branch,
-                 else_branch=else_branch, dependency=dependency)

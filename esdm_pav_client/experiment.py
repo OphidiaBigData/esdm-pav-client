@@ -1,6 +1,6 @@
 class Experiment:
     """
-    Creates or loads an ESDM PAV experiment.
+    Creates or loads an ESDM-PAV experiment.
 
     An experiment is a sequence of tasks. Each task can be either independent
     or dependent on other tasks, for instance it processes the output of other
@@ -14,19 +14,17 @@ class Experiment:
     Parameters
     ----------
     name: str
-        ESDM PAV experiment name
+        PAV experiment name
     author: str, optional
-        ESDM PAV experiment author
+        PAV experiment author
     abstract: str, optional
-        ESDM PAV experiment description
+        PAV experiment description
     on_error: str, optional
         behaviour in case of error
     run: str, optional
         enable actual execution, yes or no
     nthreads: str, optional
         number of threads
-    ncores: int, optional
-        number of cores
 
     """
 
@@ -50,8 +48,7 @@ class Experiment:
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
             if k not in self.attributes:
-                raise AttributeError(
-                    "Unknown experiment argument: {0}".format(k))
+                raise AttributeError("Unknown experiment argument: {0}".format(k))
             self.active_attributes.append(k)
         self.name = name
         self.author = author
@@ -100,26 +97,21 @@ class Experiment:
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
-                if not isinstance(param["value"], param["type"]) \
-                        and param["value"] is not None:
-                    raise AttributeError("{0} should be {1}"
-                                         .format(param["name"], param["type"]))
+                if not isinstance(param["value"], param["type"]) and param["value"] is not None:
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
             else:
                 if not isinstance(param["value"], param["type"]):
-                    raise AttributeError("{0} should be {1}"
-                                         .format(param["name"], param["type"]))
+                    raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
-        non_experiment_fields = [
-            "pyophidia_client",
-            "task_name_counter"
-        ]
-        new_experiment = {k: dict(self.__dict__)[k] for k in
-                          dict(self.__dict__).keys() if
-                          k not in non_experiment_fields}
+        non_experiment_fields = ["pyophidia_client", "task_name_counter"]
+        new_experiment = {
+            k: dict(self.__dict__)[k]
+            for k in dict(self.__dict__).keys()
+            if k not in non_experiment_fields
+        }
         if "tasks" in new_experiment.keys():
-            new_experiment["tasks"] = [t.__dict__ for t in
-                                       new_experiment["tasks"]]
+            new_experiment["tasks"] = [t.__dict__ for t in new_experiment["tasks"]]
         return new_experiment
 
     def deinit(self):
@@ -131,7 +123,7 @@ class Experiment:
 
     def addTask(self, task):
         """
-        Adds a task to the ESDM PAV experiment
+        Adds a task to the ESDM-PAV experiment
 
         Parameters
         ----------
@@ -156,15 +148,14 @@ class Experiment:
             raise AttributeError("task already exists")
         if task.__dict__["dependencies"]:
             for dependency in task.__dict__["dependencies"]:
-                if dependency["task"] not in [task.__dict__["name"] for task in
-                                              self.tasks]:
+                if dependency["task"] not in [task.__dict__["name"] for task in self.tasks]:
                     raise AttributeError("dependency not fulfilled")
         self.task_name_counter += 1
         self.tasks.append(task)
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV experiment the
+        Retrieve from the ESDM-PAV experiment the
         esdm_pav_client.task.Task object with the given task name
 
         Parameters
@@ -193,13 +184,12 @@ class Experiment:
 
     def save(self, experimentname):
         """
-        Save the ESDM PAV experiment as a JSON document
+        Save the ESDM-PAV experiment as a JSON document
 
         Parameters
         ----------
         experimentname : str
-            The path to the ESDM PAV document file where the experiment is
-            being
+            The path to the PAV document file where the experiment is being
             saved
 
         Example
@@ -220,18 +210,16 @@ class Experiment:
         if not isinstance(experimentname, str):
             raise AttributeError("experimentname must be string")
         if len(experimentname) == 0:
-            raise AttributeError(
-                "experimentname must contain more than 1 characters")
+            raise AttributeError("experimentname must contain more than 1 characters")
         data = self.wokrflow_to_json()
         if not experimentname.endswith(".json"):
             experimentname += ".json"
         with open(os.path.join(os.getcwd(), experimentname), "w") as fp:
             json.dump(data, fp, indent=4)
 
-    def newTask(self, operator, arguments={}, dependencies={}, name=None,
-                **kwargs):
+    def newTask(self, operator, arguments={}, dependencies={}, name=None, **kwargs):
         """
-        Adds a new Task in the ESDM PAV experiment without the need
+        Adds a new Task in the ESDM-PAV experiment without the need
         of creating a esdm_pav_client.task.Task object
 
         Attributes
@@ -279,8 +267,7 @@ class Experiment:
                 {"name": "operator", "value": operator, "type": str},
                 {"name": "arguments", "value": arguments, "type": dict},
                 {"name": "dependencies", "value": dependencies, "type": dict},
-                {"name": "name", "value": name, "type": str,
-                 "NoneValue": True},
+                {"name": "name", "value": name, "type": str, "NoneValue": True},
             ]
         )
         t = Task(operator=operator, arguments=arguments, name=name)
@@ -297,9 +284,9 @@ class Experiment:
         self.addTask(t)
         return t
 
-    def newSubexperiment(self, experiment, params, dependencies={}, name=None):
+    def newSubexperiment(self, experiment, params, dependencies=[], name=None):
         """
-        Embeds an ESDM PAV experiment into another experiment
+        Embeds an ESDM-PAV experiment into another experiment
 
         Parameters
         ----------
@@ -331,8 +318,8 @@ class Experiment:
         e2 = experiment(name="Experiment 2", author="sample author 2",
                         abstract="sample abstract 2")
         t1 = e2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
-        task_array = e1.newSubexperiment(name="new_subexperiment",
-                     experiment=e2, params={}, dependencies=[])
+        task_array = e1.newSubexperiment(name="new_subexperiment", experiment=e2,
+                                         params={}, dependencies=[])
         """
         try:
             from task import Task
@@ -349,8 +336,7 @@ class Experiment:
             if len(dependency.keys()) > 2:
                 raise AttributeError("Wrong dependency arguments")
             elif len(dependency.keys()) == 2:
-                if ("task" not in dependency.keys()) or (
-                        "argument" not in dependency.keys()):
+                if ("task" not in dependency.keys()) or ("argument" not in dependency.keys()):
                     raise AttributeError("Wrong dependency arguments")
             else:
                 if "task" not in dependency.keys():
@@ -382,8 +368,7 @@ class Experiment:
             if given_name:
                 return "{0}_{1}".format(given_name, previous_name)
             else:
-                return "{0}_{1}_{2}".format(self.name, str(task_id),
-                                            previous_name)
+                return "{0}_{1}_{2}".format(self.name, str(task_id), previous_name)
 
         def check_replace_args(params, task_arguments):
             import re
@@ -405,12 +390,10 @@ class Experiment:
                     new_task_arguments[k] = task_arguments[k]
             for k in task_arguments:
                 if re.search(r"(\$.*)", task_arguments[k]):
-                    if re.findall(r"(\$.*)", task_arguments[k])[
-                        0] in params.keys():
+                    if re.findall(r"(\$.*)", task_arguments[k])[0] in params.keys():
                         new_task_arguments[k] = re.sub(
                             r"(\$.*)",
-                            params[
-                                re.findall(r"(\$.*)", task_arguments[k])[0]],
+                            params[re.findall(r"(\$.*)", task_arguments[k])[0]],
                             task_arguments[k],
                         )
                     else:
@@ -422,12 +405,10 @@ class Experiment:
 
         self.__param_check(
             [
-                {"name": "experiment", "value": experiment,
-                 "type": Experiment},
+                {"name": "experiment", "value": experiment, "type": Experiment},
                 {"name": "params", "value": params, "type": dict},
                 {"name": "dependencies", "value": dependencies, "type": list},
-                {"name": "name", "value": name, "type": str,
-                 "NoneValue": True},
+                {"name": "name", "value": name, "type": str, "NoneValue": True},
             ]
         )
         validate_experiment(self, experiment)
@@ -437,8 +418,7 @@ class Experiment:
         for task in experiment.tasks:
             new_task_name = add_task_name(name, task.name, task_id)
             task_id += 1
-            new_arguments = check_replace_args(params,
-                                               task.reverted_arguments())
+            new_arguments = check_replace_args(params, task.reverted_arguments())
             new_task = Task(
                 operator=task.operator,
                 arguments=new_arguments,
@@ -449,17 +429,18 @@ class Experiment:
             all_tasks.append(new_task)
             self.addTask(new_task)
             non_leaf_tasks += [t["task"] for t in task.dependencies]
+
         return [t for t in all_tasks if t.name not in non_leaf_tasks]
 
     @staticmethod
     def load(file):
         """
-        Load a ESDM PAV experiment from the JSON document
+        Load a ESDM-PAV experiment from the JSON document
 
         Parameters
         ----------
         file : str
-            The name of the ESDM PAV document file to be loaded
+            The path/name of the PAV document file to be loaded
 
         Returns
         -------
@@ -510,12 +491,11 @@ class Experiment:
                 new_task = Task(
                     operator=d["operator"],
                     name=d["name"],
-                    arguments={a.split("=")[0]: a.split("=")[1] for a in
-                               d["arguments"]},
+                    arguments={a.split("=")[0]: a.split("=")[1] for a in d["arguments"]},
                 )
-                new_task.__dict__.update({k: d[k] for k in d if
-                                          k != "name" and k != "operator"
-                                          and k != "arguments"})
+                new_task.__dict__.update(
+                    {k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"}
+                )
                 experiment.addTask(new_task)
             return experiment
 
@@ -526,8 +506,8 @@ class Experiment:
 
     def check(self, filename="sample.dot", visual=True):
         """
-        Perform a ESDM PAV experiment validity check and display the
-        graph of the experiment
+        Check the ESDM-PAV experiment definition validity and display the
+        graph of the experiment structure
 
         Parameters
         ----------
@@ -553,34 +533,33 @@ class Experiment:
 
         def _find_subgraphs(tasks):
             list_of_operators = [t.operator for t in tasks]
-            subgraphs_list = [{"start_index": start_index, "operator": "if"}
-                              for start_index in
-                              [i for i, t in enumerate(list_of_operators) if
-                               t == "if"]]
-            subgraphs_list += [{"start_index": start_index, "operator": "for"}
-                               for start_index in
-                               [i for i, t in enumerate(list_of_operators) if
-                                t == "for"]]
-            subgraphs_list = sorted(subgraphs_list,
-                                    key=lambda i: i["start_index"])
+            subgraphs_list = [
+                {"start_index": start_index, "operator": "if"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "if"]
+            ]
+            subgraphs_list += [
+                {"start_index": start_index, "operator": "for"}
+                for start_index in [i for i, t in enumerate(list_of_operators) if t == "for"]
+            ]
+            subgraphs_list = sorted(subgraphs_list, key=lambda i: i["start_index"])
             closing_indexes = sorted(
-                [i for i, t in enumerate(list_of_operators) if
-                 t == "endfor" or t == "endif"])[::-1]
+                [i for i, t in enumerate(list_of_operators) if t == "endfor" or t == "endif"]
+            )[::-1]
             for i in range(0, len(subgraphs_list)):
                 subgraphs_list[i]["end_index"] = closing_indexes[i]
 
             cluster_counter = 0
             for subgraph in subgraphs_list:
-                new_dot = graphviz.Digraph(
-                    name="cluster_{0}".format(str(cluster_counter)))
-                for i in range(subgraph["start_index"],
-                               subgraph["end_index"] + 1):
+                new_dot = graphviz.Digraph(name="cluster_{0}".format(str(cluster_counter)))
+                for i in range(subgraph["start_index"], subgraph["end_index"] + 1):
                     new_dot.attr("node")
                     new_dot.node(
                         tasks[i].name,
-                        _trim_text(tasks[i].name) + "\n" + _trim_text(
-                            tasks[i].type) + "\n" + _trim_text(
-                            tasks[i].operator),
+                        _trim_text(tasks[i].name)
+                        + "\n"
+                        + _trim_text(tasks[i].type)
+                        + "\n"
+                        + _trim_text(tasks[i].operator),
                     )
                 subgraph["dot"] = new_dot
                 cluster_counter += 1
@@ -591,7 +570,8 @@ class Experiment:
 
             self.__runtime_connect()
             experiment_validity = self.pyophidia_client.wisvalid(
-                json.dumps(self.wokrflow_to_json()))
+                json.dumps(self.wokrflow_to_json())
+            )
             if experiment_validity[1] == "experiment is valid":
                 return True
             else:
@@ -610,8 +590,7 @@ class Experiment:
         hexagonal_commands = ["for", "endfor"]
         dot = graphviz.Digraph(comment=self.name)
         for task in self.tasks:
-            dot.attr("node", shape="circle", width="1", penwidth="1",
-                     fontsize="10pt")
+            dot.attr("node", shape="circle", width="1", penwidth="1", fontsize="10pt")
             dot.attr("edge", penwidth="1")
             if task.operator in diamond_commands:
                 dot.attr("node", shape="diamond")
@@ -619,8 +598,11 @@ class Experiment:
                 dot.attr("node", shape="hexagon")
             dot.node(
                 task.name,
-                _trim_text(task.name) + "\n" + _trim_text(
-                    task.type) + "\n" + _trim_text(task.operator),
+                _trim_text(task.name)
+                + "\n"
+                + _trim_text(task.type)
+                + "\n"
+                + _trim_text(task.operator),
             )
             dot.attr("edge", style="solid")
             for d in task.dependencies:
@@ -640,217 +622,3 @@ class Experiment:
             display(dot)
         else:
             dot.render(filename, view=True)
-
-    def newWaitTask(self, name=None, type=None, output=None,
-                    measure=None, subset_dims=None,
-                    subset_filter=None, subset_type="coord",
-                    timeout="10"):
-        """
-
-        Parameters
-        ----------
-        name: str, optional
-            The name of the task. Default value is "name"
-        type: str, optional
-            The type of the argument. Default value is "file"
-        output: str, optional
-            The output file location. Default value is "esdm://etos.nc"
-        measure: str, optional
-            The measure variable. Default value is "tos"
-        subset_dims: str, optional
-            The subset dimension. Default value is "time"
-        subset_filter: str, optional
-            The subset filter. Default value is "2001-05_2001-06"
-        subset_type: str, optional
-            The subset type. Default value is "coord"
-        timeout: str, optional
-            The timeout value. Default value is "10"
-
-        Raises
-        ------
-        AttributeError
-            If a provided argument is of wrong type.
-
-        Returns
-        -------
-        last_Task : <class 'esdm_pav_client.task.Task'>
-            Returns the last task so it can be used as a dependency
-
-        """
-        self.__param_check(
-            [
-                {"name": "name", "value": name, "type": str,
-                 "NoneValue": True},
-                {"name": "type", "value": type, "type": str,
-                 "NoneValue": True},
-                {"name": "output", "value": output, "type": str,
-                 "NoneValue": True},
-                {"name": "measure", "value": measure, "type": str,
-                 "NoneValue": True},
-                {"name": "subset_dims", "value": subset_dims, "type": str,
-                 "NoneValue": True},
-                {"name": "subset_filter", "value": subset_filter, "type": str,
-                 "NoneValue": True},
-                {"name": "subset_type", "value": subset_type, "type": str,
-                 "NoneValue": True},
-                {"name": "timeout", "value": timeout, "type": str,
-                 "NoneValue": True}
-
-            ]
-        )
-        if name is None:
-            name = "name"
-        if type == "file":
-            if output is None:
-                raise ValueError("If type is set to file you would have to "
-                                 "provide an output argument")
-
-        self.newTask(name=name, type="control", operator="wait",
-                     arguments={"type": type, "output": output,
-                                "measure": measure,
-                                "subset_dims": subset_dims,
-                                "subset_filter": subset_filter,
-                                "subset_type": subset_type,
-                                "timeout": timeout})
-
-    def newIfTask(self, condition, if_branch, else_branch, dependency=None):
-        """
-        Parameters
-        ----------
-        condition: str
-            The condition for the "if" statement
-        if_branch: Experiment
-            An Experiment object that will be used in order execute its tasks
-            in case the "if" statement is True.
-        else_branch: Experiment
-            An Experiment object that will be used in order execute its tasks
-            in case the "if" statement is False.
-        dependency: Dict
-            Use the dependency parameter in order to choose the depdnencies
-            that will be added to the first task.
-
-        Raises
-        ------
-        AttributeError
-            If a provided argument is of wrong type or .
-
-        Returns
-        -------
-
-        """
-        from task import Task
-        self.__param_check([{"name": "condition", "value": condition,
-                             "type": str},
-                            {"name": "if_branch", "value": if_branch,
-                             "type": Experiment},
-                            {"name": "else_branch", "value": else_branch,
-                             "type": Experiment},
-                            {"name": "dependencies",
-                             "value": dependency,
-                             "type": dict, "NoneValue": True}
-                                    ])
-        if len(if_branch.tasks) == 0 or len(else_branch.tasks) == 0:
-            raise AttributeError("You have to add tasks to the if_branch "
-                                 "Experiment")
-        if dependency:
-            for k in dependency.keys():
-                self.__param_check([{"name": "Dependency Task", "value": k,
-                                     "type": Task}])
-            t1 = self.newTask(name="Begin selection",
-                              type="control",
-                              operator='if',
-                              arguments={"condition": condition},
-                              dependencies=dependency)
-        else:
-            t1 = self.newTask(name="Begin selection",
-                              type="control",
-                              operator='if',
-                              arguments={"condition": condition})
-        for task in if_branch.tasks:
-            self.tasks.append(task)
-        t3 = self.newTask(name="Else",
-                          type="control",
-                          operator='else',
-                          dependencies={t1: ''})
-        for task in else_branch.tasks:
-            self.tasks.append(task)
-        last_task = self.newTask(name="End selection",
-                          type="control",
-                          operator='endif',
-                          arguments={},
-                          dependencies={if_branch.tasks[-1]: "",
-                                        else_branch.tasks[-1]: ""})
-        return last_task
-
-    def newForTask(self, name="loop", index_values="$1", parallel="yes",
-                   iteration_branch=None, dependency=None):
-        """
-        Parameters
-        ----------
-        name: str
-            The name of the starting task
-        index_values: str
-            The index_values that will be used as arguments
-        parallel: str
-            Set parallel to yes if you want the tasks inside the for loop to
-            run in parallel mode.
-        iteration_branch: Experiment
-            An Experiment object that will be used in order execute its tasks
-            inside the for loop.
-        dependency: Dict
-            Use the dependency parameter in order to choose the depdnencies
-            that will be added to the first task.
-
-        Raises
-        ------
-        AttributeError
-            If a provided argument is of wrong type or .
-
-        Returns
-        -------
-        last_Task : <class 'esdm_pav_client.task.Task'>
-            Returns the last task so it can be used as a dependency
-
-        """
-        from task import Task
-        self.__param_check([{"name": "name", "value": name,
-                             "type": str},
-                            {"name": "index_values", "value": index_values,
-                             "type": str},
-                            {"name": "parallel", "value": parallel,
-                             "type": str},
-                            {"name": "iteration_branch",
-                             "value": iteration_branch,
-                             "type": Experiment},
-                            {"name": "dependencies",
-                             "value": dependency,
-                             "type": dict, "NoneValue": True}
-                            ])
-
-        if len(iteration_branch.tasks) == 0:
-            raise AttributeError("You have to add tasks to the "
-                                 "iteration_branch Experiment")
-        if dependency:
-            for k in dependency.keys():
-                self.__param_check([{"name": "Dependency Task", "value": k,
-                                     "type": Task}])
-            self.newTask(name=name,
-                         type="control",
-                         operator='for',
-                         arguments={"key": "index", "values": index_values,
-                                    "parallel": parallel},
-                         dependencies=dependency)
-        else:
-            self.newTask(name=name,
-                         type="control",
-                         operator='for',
-                         arguments={"key": "index", "values": index_values,
-                                    "parallel": parallel})
-        for task in iteration_branch.tasks:
-            self.tasks.append(task)
-        last_task = self.newTask(name="End loop",
-                     type="control",
-                     operator='endfor',
-                     arguments={},
-                     dependencies={iteration_branch.tasks[-1]: 'cube'})
-        return last_task

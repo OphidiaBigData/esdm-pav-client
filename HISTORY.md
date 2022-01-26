@@ -1,14 +1,17 @@
-v1.2.0 - 2021-06-25
+v1.4.0 - 2021-12-16
 -------------------
 
 - This version includes:
 
-  - Changes to support the extensions to the JSON schema (e.g., new 'control' type)
-  - Support for integration with Jupyter Notebooks
-  - New method in Workflow class to visually monitor the experiment workflow execution
-  - New method in Workflow class to cancel the experiment workflow execution
-  - New method in Workflow class to visually check the experiment structure
-  - Changes to the client module to support monitoring and cancelling 
+  - Usage examples of the module main features
+  - Improved README documentation
+  - Extended Python client interface and help option
+  - Changes in the submit method in Workflow class and to the client for supporting checkpointing feature
+  - Changes to the Workflow class constructor to support initialization from running experiment ID and Experiment objects
+  - Improvements to monitor method in Workflow class for visualising the more complex constructs (e.g., loops)
+  - Improvements to usability by moving the experiment modelling methods to a new Experiment class
+  - Changes to support the latest experiment document version
+
 
 v1.0.0 - 2020-10-01
 -------------------
