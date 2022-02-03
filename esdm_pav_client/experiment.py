@@ -1,6 +1,6 @@
 class Experiment:
     """
-    Creates or loads an ESDM PAV experiment.
+    Creates or loads an ESDM-PAV experiment.
 
     An experiment is a sequence of tasks. Each task can be either independent
     or dependent on other tasks, for instance it processes the output of other
@@ -14,19 +14,17 @@ class Experiment:
     Parameters
     ----------
     name: str
-        ESDM PAV experiment name
+        PAV experiment name
     author: str, optional
-        ESDM PAV experiment author
+        PAV experiment author
     abstract: str, optional
-        ESDM PAV experiment description
+        PAV experiment description
     on_error: str, optional
         behaviour in case of error
     run: str, optional
         enable actual execution, yes or no
     nthreads: str, optional
         number of threads
-    ncores: int, optional
-        number of cores
 
     """
 
@@ -131,7 +129,7 @@ class Experiment:
 
     def addTask(self, task):
         """
-        Adds a task to the ESDM PAV experiment
+        Adds a task to the ESDM-PAV experiment
 
         Parameters
         ----------
@@ -164,7 +162,7 @@ class Experiment:
 
     def getTask(self, taskname):
         """
-        Retrieve from the ESDM PAV experiment the
+        Retrieve from the ESDM-PAV experiment the
         esdm_pav_client.task.Task object with the given task name
 
         Parameters
@@ -193,13 +191,12 @@ class Experiment:
 
     def save(self, experimentname):
         """
-        Save the ESDM PAV experiment as a JSON document
+        Save the ESDM-PAV experiment as a JSON document
 
         Parameters
         ----------
         experimentname : str
-            The path to the ESDM PAV document file where the experiment is
-            being
+            The path to the PAV document file where the experiment is being
             saved
 
         Example
@@ -231,7 +228,7 @@ class Experiment:
     def newTask(self, operator, arguments={}, dependencies={}, name=None,
                 **kwargs):
         """
-        Adds a new Task in the ESDM PAV experiment without the need
+        Adds a new Task in the ESDM-PAV experiment without the need
         of creating a esdm_pav_client.task.Task object
 
         Attributes
@@ -298,6 +295,41 @@ class Experiment:
         return t
 
     def newSubexperiment(self, experiment, params, dependency={}):
+        """
+        Embeds an ESDM-PAV experiment into another experiment
+
+        Parameters
+        ----------
+        experiment : <class 'esdm_pav_client.experiment.experiment'>
+            The experiment that will be embeded into our main experiment
+        params : dict of keywords
+            a dict of keywords that will be used to replace placeholders in
+            the tasks
+        dependencies : dict, optional
+            list of dependencies
+
+        Returns
+        -------
+        The last task of the subexperiment in case the user wants to use it as
+        a dependency.
+
+        Raises
+        ------
+        AttributeError
+            Raises AttributeError when there's an error with the experiments
+            (same name or non-existent), or when the dependencies are not
+            fulfilled
+
+        Example
+        -------
+        e1 = experiment(name="Experiment 1", author="sample author 1",
+                        abstract="sample abstract 1")
+        e2 = experiment(name="Experiment 2", author="sample author 2",
+                        abstract="sample abstract 2")
+        t1 = e2.newTask(operator='oph_reduce', arguments={'operation': 'avg'})
+        task_array = e1.newSubexperiment(experiment=e2, params={},
+                        dependency={})
+        """
         import copy
         try:
             from task import Task
@@ -382,12 +414,12 @@ class Experiment:
     @staticmethod
     def load(file):
         """
-        Load a ESDM PAV experiment from the JSON document
+        Load a ESDM-PAV experiment from the JSON document
 
         Parameters
         ----------
         file : str
-            The name of the ESDM PAV document file to be loaded
+            The path/name of the PAV document file to be loaded
 
         Returns
         -------
@@ -454,8 +486,8 @@ class Experiment:
 
     def check(self, filename="sample.dot", visual=True):
         """
-        Perform a ESDM PAV experiment validity check and display the
-        graph of the experiment
+        Check the ESDM-PAV experiment definition validity and display the
+        graph of the experiment structure
 
         Parameters
         ----------

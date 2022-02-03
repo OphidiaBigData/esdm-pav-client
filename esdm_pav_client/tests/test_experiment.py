@@ -26,8 +26,8 @@ e2 = Experiment(
     author="Author_name",
     abstract="Second example workflow for testing",
 )
-t2 = e2.newTask(operator="oph_if")
-t3 = Task(
+t4 = e2.newTask(operator="oph_if")
+t5 = Task(
     name="Create Container",
     operator="oph_createcontainer",
     arguments={},
@@ -37,21 +37,19 @@ t3 = Task(
 def test_deinit():
     e1.deinit()
 
-@pytest.mark.skip(reason="no way of currently testing this")
+
 @pytest.mark.parametrize(("task"), [(t3), ("t3"), ([t3])])
 def test_addTask(task):
     e1.addTask(task=task)
 
 
 # the first will pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(("taskname"), [("sample_task1"), (5), ({4: 5})])
 def test_get_task(taskname):
     e1.getTask(taskname=taskname)
 
 
 # First four pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("filename"),
     [
@@ -70,7 +68,6 @@ def test_save(filename):
 
 
 # First and last pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("operator", "arguments", "dependencies", "name"),
     [
@@ -99,34 +96,30 @@ def test_newTask(operator, arguments, dependencies, name):
 
 
 # first must pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
-    ("workflow", "params", "dependency", "name"),
+    ("workflow", "params", "dependency"),
     [
         (
             e2,
             {"$oph_importnc2_container_val": "historical"},
-            {},
-            "new_subworkflow2",
+            {t4: None}
         ),
         (
             e2,
             {"$oph_importnc2_container_val": "historical"},
-            [],
-            "new_subworkflow3",
+            {}
         ),
-        (e2, [], [], ""),
-        ("w2", {}, {}, ""),
+        (e2, [], {}),
+        ("w2", {}, {}),
     ],
 )
-def test_newSubExperiment(workflow, params, dependency, name):
+def test_newSubExperiment(workflow, params, dependency):
     e2.newSubexperiment(
-        experiment=workflow, params=params, dependencies=dependency, name=name
+        experiment=workflow, params=params, dependency=dependency
     )
 
 
 # only the last one will pass (you have to create a file named "file1.json")
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(("file"), [("file1"), (14), ({}), ("file1.json")])
 def test_load(file):
     e2.load(file=file)
@@ -148,7 +141,6 @@ def test_addDependency(task, argument):
 
 
 # First three should pass
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.parametrize(
     ("filename", "visual"),
     [
