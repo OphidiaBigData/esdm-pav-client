@@ -601,7 +601,7 @@ class Experiment:
         else:
             dot.render(filename, view=True)
 
-    def newWaitTask(self, name=None, type=None, output=None,
+    def newWaitTask(self, name=None, type="file", output=None,
                     measure=None, subset_dims=None,
                     subset_filter=None, subset_type="coord",
                     timeout="10"):
@@ -614,13 +614,13 @@ class Experiment:
         type: str, optional
             The type of the argument. Default value is "file"
         output: str, optional
-            The output file location. Default value is "esdm://etos.nc"
+            The location of the file to be checked
         measure: str, optional
-            The measure variable. Default value is "tos"
+            The measure variable
         subset_dims: str, optional
-            The subset dimension. Default value is "time"
+            The subset dimension
         subset_filter: str, optional
-            The subset filter. Default value is "2001-05_2001-06"
+            The subset filter
         subset_type: str, optional
             The subset type. Default value is "coord"
         timeout: str, optional
@@ -686,13 +686,14 @@ class Experiment:
             An Experiment object that will be used in order execute its tasks
             in case the "if" statement is False.
         dependency: Dict
-            Use the dependency parameter in order to choose the depdnencies
+            Use the dependency parameter in order to choose the dependencies
             that will be added to the first task.
 
         Raises
         ------
         AttributeError
-            If a provided argument is of wrong type or .
+            If a provided argument is of wrong type or both branches have no
+            tasks.
 
         Returns
         -------
@@ -764,7 +765,8 @@ class Experiment:
         Raises
         ------
         AttributeError
-            If a provided argument is of wrong type or .
+            If a provided argument is of wrong type or the branche has no
+            tasks.
 
         Returns
         -------
