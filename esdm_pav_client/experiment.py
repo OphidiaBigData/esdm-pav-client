@@ -21,6 +21,8 @@ class Experiment:
         PAV experiment description
     on_error: str, optional
         behaviour in case of error
+    on_exit: str, optional
+        behaviour in case of completion
     run: str, optional
         enable actual execution, yes or no
     nthreads: str, optional
@@ -31,12 +33,13 @@ class Experiment:
     attributes = [
         "exec_mode",
         "on_error",
+        "on_exit",
         "run",
         "nthreads",
         "ncores",
     ]
     active_attributes = ["name", "author", "abstract"]
-    task_attributes = ["run", "on_error", "type"]
+    task_attributes = ["run", "on_error", "on_exit", "type"]
     task_name_counter = 1
     subexperiment_names = []
     pyophidia_client = None
@@ -245,6 +248,8 @@ class Experiment:
             type of the task
         on_error : str, optional
             behaviour in case of error
+        on_exit: str, optional
+            behaviour in case of completion
         run : str, optional
             enable actual execution, yes or no
 
@@ -699,7 +704,11 @@ class Experiment:
         -------
 
         """
-        from task import Task
+        try:
+            from task import Task
+        except ImportError:
+            from .task import Task
+
         self.__param_check([{"name": "condition", "value": condition,
                              "type": str},
                             {"name": "if_branch", "value": if_branch,
