@@ -783,7 +783,11 @@ class Experiment:
             Returns the last task so it can be used as a dependency
 
         """
-        from task import Task
+        try:
+            from task import Task
+        except ImportError:
+            from .task import
+            
         self.__param_check([{"name": "name", "value": name,
                              "type": str},
                             {"name": "index_values", "value": index_values,
