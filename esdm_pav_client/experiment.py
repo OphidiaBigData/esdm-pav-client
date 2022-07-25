@@ -786,7 +786,7 @@ class Experiment:
         try:
             from task import Task
         except ImportError:
-            from .task import
+            from .task import Task
             
         self.__param_check([{"name": "name", "value": name,
                              "type": str},
