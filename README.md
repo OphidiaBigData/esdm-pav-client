@@ -70,6 +70,43 @@ t2 = e1.newTask(name="Sample task 2", type="ophidia", operator='oph_createcontai
                 dependencies={t1: None})
 ```
 
+#### Implement a loop in the experiment
+
+A loop starts with the for operator and ends with endfor operator. The parallel argument allows the activation of the parallel execution mode. All the tasks with a dependency from the Start Loop task are performed in the loop:
+
+```
+t1 = e1.newTask(name="Start loop", type="control", operator="for", 
+              arguments={"key": "index", "values": "1|2", "parallel": "yes"})
+t2 = e1.newTask(name="Import", type="ophidia", operator="oph_importnc", 
+              arguments={"measure": "tasmax", "imp_dim": "time", "input": "tasmax.nc"}, 
+              dependencies={"t1": ""})
+t3 = e1.newTask(name="End loop", type="control", operator="endfor", 
+              dependencies={"t2": "cube"})
+```
+
+#### Implement a selection block in the experiment
+
+The flow control constructs ("if", "elseif", "else" and "endif") are used to declare a selection statement:
+
+```
+t1 = e1.newTask(name="IF block", type="control", operator='if', 
+              arguments={'condition': '$1'})
+t2 = e1.newTask(name="Import data", type="ophidia", operator='oph_importnc',
+              arguments={'measure': '$3', 'imp_dim': 'time', 'input': '$2'},
+              dependencies={t1:''})
+t3 = e1.newTask(name="ENDIF block", type="control", operator='endif',
+              arguments={})
+```
+
+#### Experiment resilience 
+
+The on_error option set to "abort" causes the failure of the entire workflow. The other options are "skip", "continue" and "repeat". 
+
+```
+e1 = Experiment(name="Sample experiment", author="sample author",
+              abstract='Example ESDM-PAV workflow', on_error="abort")
+```
+
 #### Save a PAV experiment document
 
 Save the PAV experiment as JSON document
