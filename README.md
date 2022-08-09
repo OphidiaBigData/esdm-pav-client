@@ -72,13 +72,13 @@ t2 = e1.newTask(name="Sample task 2", type="ophidia", operator='oph_createcontai
 
 #### Implement a loop in the experiment
 
-A loop starts with the for operator and ends with endfor operator. The parallel argument allows the activation of the parallel execution mode. All the tasks with a dependency from the Start Loop task are performed in the loop:
+A loop starts with the for operator and ends with endfor operator. The parallel argument allows the activation of the parallel execution mode. All the tasks with a dependency on the Start Loop task are performed within the loop:
 
 ```
 t1 = e1.newTask(name="Start loop", type="control", operator="for", 
               arguments={"key": "index", "values": "1|2", "parallel": "yes"})
 t2 = e1.newTask(name="Import", type="ophidia", operator="oph_importnc", 
-              arguments={"measure": "tasmax", "imp_dim": "time", "input": "tasmax.nc"}, 
+              arguments={"measure": "tasmax", "imp_dim": "time", "input": "tasmax_@{index}.nc"}, 
               dependencies={"t1": ""})
 t3 = e1.newTask(name="End loop", type="control", operator="endfor", 
               dependencies={"t2": "cube"})
@@ -86,21 +86,21 @@ t3 = e1.newTask(name="End loop", type="control", operator="endfor",
 
 #### Implement a selection block in the experiment
 
-The flow control constructs ("if", "elseif", "else" and "endif") are used to declare a selection statement:
+The flow control constructs ("if", "elseif", "else" and "endif") can be used to declare a selection statement:
 
 ```
-t1 = e1.newTask(name="IF block", type="control", operator='if', 
+t1 = e1.newTask(name="If block", type="control", operator='if', 
               arguments={'condition': '$1'})
 t2 = e1.newTask(name="Import data", type="ophidia", operator='oph_importnc',
-              arguments={'measure': '$3', 'imp_dim': 'time', 'input': '$2'},
+              arguments={'measure': 'tasmax', 'imp_dim': 'time', 'input': 'tasmax.nc'},
               dependencies={t1:''})
-t3 = e1.newTask(name="ENDIF block", type="control", operator='endif',
-              arguments={})
+t3 = e1.newTask(name="Endif block", type="control", operator='endif', arguments={},
+              dependencies={t2:''})
 ```
 
-#### Experiment resilience 
+#### Experiment error management 
 
-The on_error option set to "abort" causes the failure of the entire workflow. The other options are "skip", "continue" and "repeat". 
+Different behaviours can be specified for the experiment in case of an error during its execution via the 'on_error' argument. If set to "abort", an error in a task will cause the entire workflow to end; in case of "skip" only the failed task is skipped; with "continue" the failed task and all its dependencies are skipped; while with "repeat" the task execution will be repeated. 
 
 ```
 e1 = Experiment(name="Sample experiment", author="sample author",
