@@ -98,6 +98,10 @@ class Workflow:
         w1.submit(server="127.0.0.1", port="11732", "test")
         """
 
+        self.server = server
+        self.port = port
+        self.__runtime_connect()
+
         exec_mode = self.experiment_object.exec_mode
         self.experiment_object.exec_mode = "async"
 
@@ -109,7 +113,6 @@ class Workflow:
                 raise AttributeError("You can't submit a workflow that was already" "submitted")
             dict_workflow = json.dumps(self.workflow_to_json())
             str_workflow = str(dict_workflow)
-            self.__runtime_connect()
             self.pyophidia_client.wsubmit(str_workflow, *args)
 
         else:
