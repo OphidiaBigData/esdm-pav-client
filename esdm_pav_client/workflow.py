@@ -434,6 +434,9 @@ class Workflow:
             new_workflow["tasks"] = [t.__dict__ for t in new_workflow["tasks"]]
         return new_workflow
 
+    def __repr__(self):
+        return self.workflow_to_json()
+
     def __runtime_connect(self):
         from PyOphidia import client
 

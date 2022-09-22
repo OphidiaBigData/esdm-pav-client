@@ -117,6 +117,9 @@ class Experiment:
             new_experiment["tasks"] = [t.__dict__ for t in new_experiment["tasks"]]
         return new_experiment
 
+    def __repr__(self):
+        return self.workflow_to_json()
+
     def deinit(self):
         """
         Reverse the initialization of the object
