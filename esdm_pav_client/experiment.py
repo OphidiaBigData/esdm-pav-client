@@ -466,7 +466,7 @@ class Experiment:
                 new_task = Task(
                     operator=d["operator"],
                     name=d["name"],
-                    arguments={a.split("=")[0]: a.split("=")[1] for a in d["arguments"]},
+                    arguments={a.split("=")[0]: a.split("=", 1)[1] for a in d["arguments"]},
                 )
                 new_task.__dict__.update(
                     {k: d[k] for k in d if k != "name" and k != "operator" and k != "arguments"}
