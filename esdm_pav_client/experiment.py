@@ -9,7 +9,7 @@ class Experiment:
     Construction::
     e1 = Experiment(name="sample", author="sample author",
                     abstract="sample abstract", on_error=None, run=None,
-                    ncores=1, nthreads=None)
+                    ncores=1, nthreads=None, host_partition=None)
 
     Parameters
     ----------
@@ -27,6 +27,8 @@ class Experiment:
         enable actual execution, yes or no
     nthreads: str, optional
         number of threads
+    host_partition: str, optional
+        name of the host partition to be used
 
     """
 
@@ -37,6 +39,7 @@ class Experiment:
         "run",
         "nthreads",
         "ncores",
+        "host_partition",
     ]
     active_attributes = ["name", "author", "abstract"]
     task_attributes = ["run", "on_error", "on_exit", "type"]

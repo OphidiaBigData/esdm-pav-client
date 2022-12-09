@@ -155,7 +155,7 @@ class Workflow:
         -------
          e1 = Experiment(name="Experiment 1", author="sample author",
                         abstract="sample abstract")
-         t1 = w1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
+         t1 = e1.newTask(operator="oph_reduce", arguments={'operation': 'avg'},
                           dependencies={})
          w1 = Workflow(e1)
          w1.submit()
