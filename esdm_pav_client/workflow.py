@@ -22,6 +22,7 @@ class Workflow:
     password = "abcd"
     server = "127.0.0.1"
     port = "11732"
+    project = None
     experiment_name = None
 
     def __init__(self, experiment):
@@ -454,6 +455,7 @@ class Workflow:
                 password=self.password,
                 server=self.server,
                 port=self.port,
+                project=self.project,
                 api_mode=False,
             )
             if self.pyophidia_client.last_return_value != 0:
