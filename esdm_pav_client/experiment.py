@@ -45,11 +45,6 @@ class Experiment:
     task_attributes = ["run", "on_error", "on_exit", "type"]
     task_name_counter = 1
     subexperiment_names = []
-    pyophidia_client = None
-    username = "oph-test"
-    password = "abcd"
-    server = "127.0.0.1"
-    port = "11732"
 
     def __init__(self, name, author=None, abstract=None, **kwargs):
         for k in kwargs.keys():
@@ -76,30 +71,6 @@ class Experiment:
         except NameError:
             return False
 
-    def __runtime_connect(self):
-        from PyOphidia import client
-
-        self.__param_check(
-            [
-                {"name": "username", "value": self.username, "type": str},
-                {"name": "server", "value": self.server, "type": str},
-                {"name": "port", "value": self.port, "type": str},
-                {"name": "password", "value": self.password, "type": str},
-            ]
-        )
-        if self.pyophidia_client is None:
-            self.pyophidia_client = client.Client(
-                username=self.username,
-                password=self.password,
-                server=self.server,
-                port=self.port,
-                api_mode=False,
-            )
-            if self.pyophidia_client.last_return_value != 0:
-                raise AttributeError("failed to connect to the runtime")
-            else:
-                self.pyophidia_client.resume_session()
-
     def __param_check(self, params=[]):
         for param in params:
             if "NoneValue" in param.keys():
@@ -110,7 +81,7 @@ class Experiment:
                     raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
     def wokrflow_to_json(self):
-        non_experiment_fields = ["pyophidia_client", "task_name_counter"]
+        non_experiment_fields = ["task_name_counter"]
         new_experiment = {
             k: dict(self.__dict__)[k]
             for k in dict(self.__dict__).keys()
@@ -545,9 +516,13 @@ class Experiment:
 
         def _check_experiment_validity():
             import json
+            
+            from PyOphidia import client
+            pyophidia_client = client.Client(
+                local_mode=True,
+            )
 
-            self.__runtime_connect()
-            experiment_validity = self.pyophidia_client.wisvalid(
+            experiment_validity = pyophidia_client.wisvalid(
                 json.dumps(self.wokrflow_to_json())
             )
             if experiment_validity[1] == "experiment is valid":
