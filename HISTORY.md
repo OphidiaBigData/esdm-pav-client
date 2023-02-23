@@ -1,3 +1,14 @@
+v1.6.0 - 2023-02-23
+-------------------
+
+- This version includes:
+
+  - Improved README documentation 
+  - Add \_\_repr\_\_ method to Experiment and Workflow classes
+  - Bug fixing on Experiment class
+  - Changes in the Workflow class for supporting execution with remote runtime
+  - Remove runtime connection requirement from Experiment class
+
 v1.4.0 - 2021-12-16
 -------------------
 
