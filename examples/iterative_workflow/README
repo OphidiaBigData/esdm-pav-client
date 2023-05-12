@@ -1,0 +1,11 @@
+Iterative workflow
+
+This notebook can be used to execute an iterative workflow.
+In order to use the notebook, preliminarly it is necessary to create a cluster of I/O server nodes called "cluster" (see line 7 of task 2). The number of hosts of the cluster has to be set in task 1.
+Let us assume input ESDM dataset is referred as esdm://etas.nc (variable name will be "tas"). Output dataset will be referred as esdm://output.nc.
+Note that the input dataset is produced by the program "esdm_write" obtained as follows.
+
+gcc -o esdm_write -I /path/to/esdm/include -L /path/to/esdm/lib -lesdm -lsmd -Wl,-rpath -Wl,/path/to/esdm/lib esdm_write.c
+
+The workflow defined in the notebook should be executed (task 3) while the production of input dataset is running. In fact, "esdm_write" simulates a climate model that periodically saves data related to a new time step into the ESDM container. The workflow has been designed to process a subset of the input dataset (related to ten simulation steps) as soon as it is available and stored in the ESDM container.
+

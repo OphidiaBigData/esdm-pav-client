@@ -1,0 +1,6 @@
+Cold Spells
+
+This notebook can be used to evaluate some statistics about the cold spells.
+In order to use the notebook, preliminarly it is necessary to create a cluster of I/O server nodes called "cluster" (see line 7 of task 2). The number of hosts of the cluster has to be set in task 1.
+Let us assume input NetCDF datasets are stored in two folders: /path/to/input/past and /path/to/input/future. Output plots will be stored in /path/to/output.
+
