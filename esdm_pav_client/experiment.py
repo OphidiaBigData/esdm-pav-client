@@ -92,7 +92,8 @@ class Experiment:
         return new_experiment
 
     def __repr__(self):
-        return self.workflow_to_json()
+        import json;
+        return json.dumps(self.workflow_to_json())
 
     def deinit(self):
         """
