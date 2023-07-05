@@ -157,7 +157,7 @@ class Experiment:
                     arguments={'operation': 'avg'})
         task = e1.getTask(taskname="task_one")
         """
-        tasks = [t for t in self.tasks if t["name"] == taskname]
+        tasks = [t for t in self.tasks if t.name == taskname]
         if len(tasks) == 1:
             return tasks[0]
         elif len(tasks) == 0:
