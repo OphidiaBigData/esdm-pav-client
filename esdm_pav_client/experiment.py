@@ -80,7 +80,7 @@ class Experiment:
                 if not isinstance(param["value"], param["type"]):
                     raise AttributeError("{0} should be {1}".format(param["name"], param["type"]))
 
-    def wokrflow_to_json(self):
+    def workflow_to_json(self):
         non_experiment_fields = ["task_name_counter"]
         new_experiment = {
             k: dict(self.__dict__)[k]
