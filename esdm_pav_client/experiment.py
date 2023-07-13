@@ -192,7 +192,7 @@ class Experiment:
             raise AttributeError("experimentname must be string")
         if len(experimentname) == 0:
             raise AttributeError("experimentname must contain more than 1 characters")
-        data = self.wokrflow_to_json()
+        data = self.workflow_to_json()
         if not experimentname.endswith(".json"):
             experimentname += ".json"
         with open(os.path.join(os.getcwd(), experimentname), "w") as fp:
@@ -524,7 +524,7 @@ class Experiment:
             )
 
             experiment_validity = pyophidia_client.wisvalid(
-                json.dumps(self.wokrflow_to_json())
+                json.dumps(self.workflow_to_json())
             )
             if experiment_validity[1] == "experiment is valid":
                 return True
