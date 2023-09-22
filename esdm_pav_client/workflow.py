@@ -22,6 +22,8 @@ class Workflow:
     password = "abcd"
     server = "127.0.0.1"
     port = "11732"
+    token = ''
+    read_env = False
     project = None
     experiment_name = None
 
@@ -455,6 +457,8 @@ class Workflow:
                 password=self.password,
                 server=self.server,
                 port=self.port,
+                token=self.token,
+                read_env=self.read_env,
                 project=self.project,
                 api_mode=False,
             )
